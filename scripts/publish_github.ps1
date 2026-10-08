@@ -28,10 +28,13 @@ if (git rev-parse --verify main 2>$null) {
     git branch -M main 2>$null
 }
 
-if (git remote get-url origin 2>$null) {
+$hasOrigin = $false
+git remote get-url origin *> $null
+if ($LASTEXITCODE -eq 0) { $hasOrigin = $true }
+if ($hasOrigin) {
     Write-Host "Remote origin already set; pushing..."
     git push -u origin main
-    gh repo view --web
+    gh repo view --json url -q .url
     exit 0
 }
 
