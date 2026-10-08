@@ -1,0 +1,26 @@
+{
+  "name": "nature-portfolio-skills",
+  "version": "1.0.0",
+  "author": "Denghui Pan",
+  "skill_count": 14,
+  "skills": [
+    "nature-portfolio",
+    "nature-academic-search",
+    "nature-citation",
+    "nature-data",
+    "nature-figure",
+    "nature-paper-to-patent",
+    "nature-paper2ppt",
+    "nature-plotting",
+    "nature-polishing",
+    "nature-reader",
+    "nature-response",
+    "nature-reviewer",
+    "nature-writing",
+    "paper-figure-style"
+  ],
+  "install": {
+    "windows": "scripts/install.ps1",
+    "config": "config.yaml"
+  }
+}

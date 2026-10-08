@@ -1,0 +1,13 @@
+# Copy to config.yaml and edit paths for this machine.
+
+canonical_plotting_dir: "D:/OneDrive/UCSC/Paper/End-facet/plotting"
+
+# Where install.ps1 copies skills (true = install).
+agents:
+  cursor: true   # %USERPROFILE%\.cursor\skills
+  claude: true   # %USERPROFILE%\.claude\skills
+  codex: true    # %USERPROFILE%\.codex\skills
+  agents: false  # %USERPROFILE%\.agents\skills
+
+# Optional: also sync canonical nature_style.py into plotting_dir on install
+sync_nature_style_to_plotting_dir: true
