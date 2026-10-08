@@ -3,11 +3,23 @@
 Portable **Nature / Nature Photonics** agent skill bundle: writing, figures,
 plotting (`nature_style.py`), citations, reviewer response, PPT, etc.
 
-## Quick install (Windows)
+## Quick install
 
-1. Copy this entire folder to the new PC (or `git clone` if you use a remote).
-2. Copy `config.example.yaml` → `config.yaml` (optional: set `canonical_plotting_dir` to your paper `plotting/` folder; leave `""` to use bundled assets).
-3. Run:
+1. `git clone https://github.com/denghuipan/nature-portfolio-skills.git`
+2. Copy `config.example.yaml` → `config.yaml` (optional: set `canonical_plotting_dir`; default `""` uses bundled assets).
+3. Run the installer for your OS:
+
+**macOS / Linux**
+
+```bash
+cd nature-portfolio-skills
+cp config.example.yaml config.yaml
+chmod +x scripts/install.sh
+./scripts/install.sh
+# or: python3 scripts/install.py
+```
+
+**Windows**
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts\install.ps1
@@ -17,11 +29,11 @@ powershell -ExecutionPolicy Bypass -File scripts\install.ps1
 
 Install copies `skills/*` into:
 
-| Agent | Path |
-|-------|------|
-| Cursor | `%USERPROFILE%\.cursor\skills\` |
-| Claude Code | `%USERPROFILE%\.claude\skills\` |
-| Codex | `%USERPROFILE%\.codex\skills\` |
+| Agent | macOS / Linux | Windows |
+|-------|----------------|---------|
+| Cursor | `~/.cursor/skills/` | `%USERPROFILE%\.cursor\skills\` |
+| Claude Code | `~/.claude/skills/` | `%USERPROFILE%\.claude\skills\` |
+| Codex | `~/.codex/skills/` | `%USERPROFILE%\.codex\skills\` |
 
 Toggle agents in `config.yaml` under `agents:`.
 

@@ -33,13 +33,12 @@ install script.
    to use bundled `skills/nature-plotting/assets`. Set it only to sync
    `nature_style.py` into a paper project's `plotting/` folder.
 
-3. **Install** (Windows):
+3. **Install**:
 
-   ```powershell
-   powershell -ExecutionPolicy Bypass -File "<BUNDLE_ROOT>\scripts\install.ps1"
-   ```
+   - **macOS / Linux:** `python3 "<BUNDLE_ROOT>/scripts/install.py"`
+   - **Windows:** `powershell -ExecutionPolicy Bypass -File "<BUNDLE_ROOT>\scripts\install.ps1"`
 
-   Use `-Force` to overwrite existing skill dirs without prompt.
+   On Windows, `install.ps1` supports `-Force` to overwrite skill dirs.
 
 4. **Verify**: Confirm `%USERPROFILE%\.cursor\skills\nature-plotting\SKILL.md`
    exists (and `.claude`, `.codex` if enabled in config).

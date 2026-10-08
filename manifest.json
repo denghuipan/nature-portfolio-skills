@@ -21,6 +21,8 @@
   ],
   "install": {
     "windows": "scripts/install.ps1",
+    "macos_linux": "scripts/install.sh",
+    "cross_platform": "scripts/install.py",
     "config": "config.yaml"
   }
 }
