@@ -60,6 +60,24 @@ The **nature-portfolio** skill tells the agent to run `scripts/install.ps1`.
 
 `%USERPROFILE%\.nature-portfolio\state.json` records `bundle_root` for agents.
 
+## Publish to GitHub (this machine)
+
+1. One-time login: `gh auth login` (browser device flow).
+2. From repo root:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\publish_github.ps1
+```
+
+Default: **private** repo `nature-portfolio-skills`. Pass `-Visibility public` if you want it public.
+
+`config.yaml` is gitignored (local paths). Only `config.example.yaml` is tracked.
+
+## Backups
+
+Legacy pre-`np_final` matplotlib module: `backups/nature_style.pre_np_final_backup.py`
+(mirror in `End-facet/plotting/` on your paper machine).
+
 ## License
 
 Personal academic workflow; individual skill files may carry their own attribution.
