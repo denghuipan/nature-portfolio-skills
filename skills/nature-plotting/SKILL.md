@@ -37,25 +37,28 @@ For matplotlib panels in this repo, stay in Python and this module.
 
 ## 1. Load the canonical module — never hand-roll rcParams
 
+Paths are **not** hard-coded. After `scripts/install.ps1`, use the portable loader
+(bundled under this skill's `assets/`):
+
 ```python
 import sys
 from pathlib import Path
 
-PLOTTING_DIR = Path(r"{{CANONICAL_PLOTTING_DIR}}")
-if str(PLOTTING_DIR) not in sys.path:
-    sys.path.insert(0, str(PLOTTING_DIR))
+# Path to .../nature-plotting/assets (installed skill dir or git clone)
+ASSETS = Path(__file__).resolve().parent / "assets"  # adjust if notebook lives elsewhere
+sys.path.insert(0, str(ASSETS))
+import load_nature_style  # resolves dir via state.json / NATURE_PLOTTING_DIR / bundle
 from nature_style import *
 
 # Optional: large preview for slides / group meeting only
 # apply_preset("mock")
-
-_mock = Path("figure_mock")
-if _mock.exists() and not any(_mock.iterdir()):
-    _mock.rmdir()
 ```
 
-If the canonical path is unreachable, use this skill's bundled
-`assets/nature_style.py` (refresh from canonical when it changes).
+**Resolution order:** `NATURE_PLOTTING_DIR` env → `~/.nature-portfolio/state.json`
+(`plotting_dir`) → `BUNDLE_ROOT.txt` from install → bundled `assets/nature_style.py`.
+
+Optional: set `canonical_plotting_dir` in repo `config.yaml` before install to sync
+`nature_style.py` into your paper project's `plotting/` folder.
 
 ## 2. Presets and print sizes
 
@@ -149,5 +152,5 @@ legend vs peaks, two-line y-labels on narrow panels.
 
 ## 10. Canonical module
 
-`{{CANONICAL_PLOTTING_DIR}}/nature_style.py` — mirror:
-`assets/nature_style.py`. Manuscript numbers: `TBL`, `HENE_*`, `SNR3_THRESHOLD`.
+Shipped at `assets/nature_style.py` (+ `assets/load_nature_style.py`). Sample
+manuscript constants: `TBL`, `HENE_*`, `SNR3_THRESHOLD` (replace for your paper).

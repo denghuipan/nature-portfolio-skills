@@ -29,8 +29,9 @@ install script.
    - Or ask the user where they cloned/copied `nature-portfolio-skills`
 
 2. **Config**: In the bundle root, ensure `config.yaml` exists (copy from
-   `config.example.yaml`). User must set `canonical_plotting_dir` to the
-   machine's `plotting/` folder (contains `nature_style.py`).
+   `config.example.yaml`). `canonical_plotting_dir` is **optional** — leave `""`
+   to use bundled `skills/nature-plotting/assets`. Set it only to sync
+   `nature_style.py` into a paper project's `plotting/` folder.
 
 3. **Install** (Windows):
 

@@ -1,9 +1,11 @@
-"""Quick visual test for nature_style np_final preset."""
+"""Quick visual test for nature_style np_final preset (portable paths)."""
 import sys
 from pathlib import Path
 
-PLOTTING = Path(r"D:\OneDrive\UCSC\Paper\End-facet\plotting")
-sys.path.insert(0, str(PLOTTING))
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / "skills" / "nature-plotting" / "assets"))
+import load_nature_style  # noqa: F401 — sets sys.path
+
 import matplotlib.pyplot as plt
 from nature_style import (
     PALETTE,
@@ -15,7 +17,7 @@ from nature_style import (
     active_preset,
 )
 
-OUT = Path(__file__).resolve().parent.parent / "test_output"
+OUT = ROOT / "test_output"
 OUT.mkdir(exist_ok=True)
 
 wl = TBL["wl"]
@@ -40,8 +42,8 @@ ax2.set_xlim(480, 870)
 ax2.legend(loc="upper right")
 panel_label(ax2, "b")
 
-fig.suptitle("Nature style test (End-facet TBL)", fontsize=7, y=1.02)
 fig.tight_layout()
 save_fig(fig, "np_final_test", outdir=OUT)
+print("plotting_dir:", load_nature_style.resolve_plotting_dir())
 print("preset:", active_preset())
 print("saved:", OUT / "np_final_test.png")

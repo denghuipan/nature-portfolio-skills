@@ -1,13 +1,14 @@
-# Copy to config.yaml and edit paths for this machine.
+# Copy to config.yaml on each machine.
 
-canonical_plotting_dir: "D:/OneDrive/UCSC/Paper/End-facet/plotting"
+# Optional: your paper repo's plotting/ folder (must contain or receive nature_style.py).
+# Leave empty ("") to use bundled skills/nature-plotting/assets only — works for any clone.
+canonical_plotting_dir: ""
 
-# Where install.ps1 copies skills (true = install).
 agents:
-  cursor: true   # %USERPROFILE%\.cursor\skills
-  claude: true   # %USERPROFILE%\.claude\skills
-  codex: true    # %USERPROFILE%\.codex\skills
-  agents: false  # %USERPROFILE%\.agents\skills
+  cursor: true
+  claude: true
+  codex: true
+  agents: false
 
-# Optional: also sync canonical nature_style.py into plotting_dir on install
+# When canonical_plotting_dir is set, copy assets/nature_style.py there on install.
 sync_nature_style_to_plotting_dir: true

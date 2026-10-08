@@ -25,15 +25,13 @@ The canonical style lives in a real module. Import it; never retype the settings
 import sys
 from pathlib import Path
 
-PLOTTING_DIR = Path(r"D:\OneDrive\UCSC\Paper\End-facet\plotting")
-if str(PLOTTING_DIR) not in sys.path:
-    sys.path.insert(0, str(PLOTTING_DIR))
-from nature_style import *   # rcParams, PALETTE, CYCLE, style_axes, panel_label, ...
-
-# nature_style creates figure_mock/ in cwd on import; remove it if unused
-_mock = Path("figure_mock")
-if _mock.exists() and not any(_mock.iterdir()):
-    _mock.rmdir()
+# Prefer nature-plotting portable loader (see nature-portfolio-skills install)
+ASSETS = Path.home() / ".cursor" / "skills" / "nature-plotting" / "assets"
+if not (ASSETS / "load_nature_style.py").is_file():
+    ASSETS = Path("<BUNDLE_ROOT>") / "skills" / "nature-plotting" / "assets"
+sys.path.insert(0, str(ASSETS))
+import load_nature_style
+from nature_style import *
 ```
 
 **Two gotchas in that module:**

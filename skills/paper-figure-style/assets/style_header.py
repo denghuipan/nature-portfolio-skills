@@ -1,11 +1,7 @@
 """
 Standalone fallback for the house figure style.
 
-Preferred path is always:
-
-    import sys; from pathlib import Path
-    sys.path.insert(0, r"D:\\OneDrive\\UCSC\\Paper\\End-facet\\plotting")
-    from nature_style import *
+Preferred path: nature-plotting `assets/load_nature_style.py` (see nature-portfolio-skills).
 
 Use this file only when that module is unreachable (different machine or repo).
 The settings below are byte-for-byte the ones nature_style.py applies, so figures

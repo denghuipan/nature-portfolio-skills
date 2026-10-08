@@ -6,7 +6,7 @@ plotting (`nature_style.py`), citations, reviewer response, PPT, etc.
 ## Quick install (Windows)
 
 1. Copy this entire folder to the new PC (or `git clone` if you use a remote).
-2. Copy `config.example.yaml` → `config.yaml` and set `canonical_plotting_dir`.
+2. Copy `config.example.yaml` → `config.yaml` (optional: set `canonical_plotting_dir` to your paper `plotting/` folder; leave `""` to use bundled assets).
 3. Run:
 
 ```powershell
@@ -75,8 +75,7 @@ Default: **private** repo `nature-portfolio-skills`. Pass `-Visibility public` i
 
 ## Backups
 
-Legacy pre-`np_final` matplotlib module: `backups/nature_style.pre_np_final_backup.py`
-(mirror in `End-facet/plotting/` on your paper machine).
+Legacy pre-`np_final` matplotlib module: `backups/nature_style.pre_np_final_backup.py`.
 
 ## License
 

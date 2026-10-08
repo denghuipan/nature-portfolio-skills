@@ -10,6 +10,4 @@ Restore in a paper repo:
 # copy over nature_style.py only if you intentionally want legacy mock sizing
 ```
 
-Canonical live copy also lives next to the manuscript:
-
-`End-facet/plotting/nature_style.pre_np_final_backup.py`
+Keep a copy in your paper repo if you use a project-local `plotting/` folder.
