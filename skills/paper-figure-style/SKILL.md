@@ -25,20 +25,18 @@ The canonical style lives in a real module. Import it; never retype the settings
 import sys
 from pathlib import Path
 
-# Prefer nature-plotting portable loader (see nature-portfolio-skills install)
-ASSETS = Path.home() / ".cursor" / "skills" / "nature-plotting" / "assets"
-if not (ASSETS / "load_nature_style.py").is_file():
-    ASSETS = Path("<BUNDLE_ROOT>") / "skills" / "nature-plotting" / "assets"
+# nature-plotting assets: first installed agent skill folder that has them, else the repo clone
+ASSETS = next((p for p in (Path.home() / d / "skills" / "nature-plotting" / "assets"
+                           for d in (".claude", ".codex", ".cursor", ".agents"))
+               if (p / "load_nature_style.py").is_file()),
+              Path("<BUNDLE_ROOT>") / "skills" / "nature-plotting" / "assets")
 sys.path.insert(0, str(ASSETS))
 import load_nature_style
 from nature_style import *
 ```
 
-**Two gotchas in that module:**
-
-- `nature_style.save()` writes into `figure_mock/`, not your output dir. Define a local
-  `save_fig()` instead (§3).
-- The import has the `figure_mock/` side effect above. Clean it up.
+**One gotcha in that module:** `nature_style.save()` writes into `figure_preview/` by default; pass
+`outdir=` (or use `save_fig(fig, name, outdir=...)`).
 
 If `plotting/nature_style.py` is unreachable (different machine, different repo), fall back
 to [assets/style_header.py](assets/style_header.py), which inlines the identical settings.
@@ -154,10 +152,7 @@ Each of these shipped as a broken figure once and was caught only by looking at 
 - Do not deliver a figure you have not viewed.
 - Do not restyle by editing the generated `.ipynb`; edit the builder.
 
-## 8. Canonical examples
+## 8. Reference implementations
 
-Read these before starting if the job is non-trivial — they are the reference
-implementations of everything above:
-
-- `simulation/end-facet pattern/fimmwave_780nm_fm_scan/analyze_fm_scan.ipynb`
-- `simulation/end-facet pattern/analysis_500nm/decorrelation_vs_dlambda.ipynb`
+The runnable templates of the `nature-plotting` skill (`templates/`, previews in its `gallery/` and
+`README.md`) are the reference implementations of everything above; start from the closest one.

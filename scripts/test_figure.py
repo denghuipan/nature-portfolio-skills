@@ -1,49 +1,35 @@
-"""Quick visual test for nature_style np_final preset (portable paths)."""
+"""Smoke test for the nature-plotting skill: loads the modules through the portable loader, draws one
+two-panel figure with mock data, saves PNG + PDF to ./test_output and prints the text-size audit."""
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "skills" / "nature-plotting" / "assets"))
-import load_nature_style  # noqa: F401 — sets sys.path
+import load_nature_style  # noqa: F401  (resolves the plotting folder)
 
-import matplotlib.pyplot as plt
-from nature_style import (
-    PALETTE,
-    TBL,
-    figsize_2col,
-    panel_label,
-    style_axes,
-    save_fig,
-    active_preset,
-)
+import numpy as np
+from nature_style import PALETTE, figsize_2col, panel_label, style_axes, save_fig, active_preset, audit_text
+from nature_charts import direct_label, ci_band
 
 OUT = ROOT / "test_output"
-OUT.mkdir(exist_ok=True)
+x = np.linspace(0, 10, 40)
+rng = np.random.default_rng(0)
+y1 = np.exp(-x / 4) + rng.normal(0, 0.02, x.size)
+y2 = np.exp(-x / 2.5) + rng.normal(0, 0.02, x.size)
 
-wl = TBL["wl"]
-eta = TBL["eta_sys"]
-mae = TBL["mae_20f"]
-
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=figsize_2col())
-for ax in (ax1, ax2):
+import matplotlib.pyplot as plt
+fig, (a, b) = plt.subplots(1, 2, figsize=figsize_2col())
+for ax in (a, b):
     style_axes(ax)
-
-ax1.plot(wl, eta, "o-", color=PALETTE["blue"], lw=1.5, ms=4, markeredgecolor="white", markeredgewidth=0.5)
-ax1.set_xlabel("Wavelength (nm)")
-ax1.set_ylabel(r"System efficiency $\eta_{\mathrm{sys}}$ (%)")
-ax1.set_xlim(480, 870)
-panel_label(ax1, "a")
-
-ax2.plot(wl, mae, "s-", color=PALETTE["green"], lw=1.5, ms=4, markeredgecolor="white", markeredgewidth=0.5)
-ax2.axhline(0.1, color="0.65", ls="--", lw=1.0, label="0.1 nm guide")
-ax2.set_xlabel("Wavelength (nm)")
-ax2.set_ylabel("MAE (nm, 20-frame avg)")
-ax2.set_xlim(480, 870)
-ax2.legend(loc="upper right")
-panel_label(ax2, "b")
-
+a.plot(x, y1, color=PALETTE["blue"]); a.plot(x, y2, color=PALETTE["red"])
+direct_label(a, 6, y1[24], "Data 1", color=PALETTE["blue"], dy=3, va="bottom")
+direct_label(a, 6, y2[24], "Data 2", color=PALETTE["red"], dy=-3, va="top")
+a.set_xlabel("Variable x (unit)"); a.set_ylabel("Response (a.u.)"); panel_label(a, "a")
+ci_band(b, x, y1 - 0.05, y1 + 0.05, PALETTE["blue"]); b.plot(x, y1, color=PALETTE["blue"])
+b.set_xlabel("Variable x (unit)"); b.set_ylabel("Response (a.u.)"); panel_label(b, "b")
 fig.tight_layout()
-save_fig(fig, "np_final_test", outdir=OUT)
+audit_text(fig)
+save_fig(fig, "smoke_test", outdir=OUT)
 print("plotting_dir:", load_nature_style.resolve_plotting_dir())
 print("preset:", active_preset())
-print("saved:", OUT / "np_final_test.png")
+print("saved:", OUT / "smoke_test.png")

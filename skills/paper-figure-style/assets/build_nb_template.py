@@ -57,7 +57,10 @@ if not (HERE / "<anchor_file>").exists():
         HERE = cand
 
 # ---- 房屋样式：load_nature_style（见 nature-portfolio-skills） ----
-ASSETS = Path.home() / ".cursor" / "skills" / "nature-plotting" / "assets"
+ASSETS = next((p for p in (Path.home() / d / "skills" / "nature-plotting" / "assets"
+                           for d in (".claude", ".codex", ".cursor", ".agents"))
+               if (p / "load_nature_style.py").is_file()),
+              Path(__file__).resolve().parents[2] / "nature-plotting" / "assets")
 if not (ASSETS / "load_nature_style.py").is_file():
     raise FileNotFoundError("Run nature-portfolio install.ps1 or set NATURE_PLOTTING_DIR")
 sys.path.insert(0, str(ASSETS))

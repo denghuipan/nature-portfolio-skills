@@ -50,7 +50,7 @@ The **nature-portfolio** skill tells the agent to run `scripts/install.ps1`.
 | Skill | Role |
 |-------|------|
 | nature-portfolio | Install & sync (this bootstrap) |
-| nature-plotting | Matplotlib house style + NP sizes (`np_final`) |
+| nature-plotting | Matplotlib house style + NP sizes (`np_final`), 53 figure templates, colour maps / colour bars, schematic primitives — see [gallery](skills/nature-plotting/README.md) |
 | nature-figure | Figure contract, layouts, QA |
 | nature-writing | Manuscript sections |
 | nature-polishing | English polish |
@@ -66,7 +66,9 @@ The **nature-portfolio** skill tells the agent to run `scripts/install.ps1`.
 
 - Edit skills under **`skills/`** in this repo, then re-run `install.ps1`.
 - Canonical plotting module: `skills/nature-plotting/assets/nature_style.py`
-  (install can sync it to `canonical_plotting_dir`).
+  (install can sync it to `canonical_plotting_dir`; leave that empty if your paper repo keeps its own copy).
+- Figure templates: `skills/nature-plotting/templates/` (mock data), previews rebuilt with
+  `python skills/nature-plotting/scripts/render_gallery.py`.
 
 ## State file
 

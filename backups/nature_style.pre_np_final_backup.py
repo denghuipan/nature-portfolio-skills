@@ -125,25 +125,4 @@ def make_spectrum(x, peaks, noise=0.0, rng=None):
     return y
 
 
-TBL = {
-    "wl":        np.array([500, 550, 600, 650, 700, 750, 800, 850]),
-    "device":    ["A", "A", "A", "B", "B", "B", "B", "B"],
-    "chip_IL":   np.array([11.8, 9.5, 6.8, 4.5, 4.1, 3.9, 3.9, 3.8]),
-    "T_fiber":   np.array([0.82, 0.92, 0.97, 0.98, 0.99, 0.99, 0.99, 0.93]),
-    "QE":        np.array([0.53, 0.58, 0.61, 0.63, 0.62, 0.58, 0.52, 0.46]),
-    "eta_sys":   np.array([3.1, 4.8, 5.8, 5.2, 5.5, 5.1, 4.5, 3.4]),
-    "snr120":    np.array([0.95, 1.05, 1.15, 1.23, 1.18, 1.20, 1.22, 1.15]),
-    "Ngamma":    np.array([4.2, 6.5, 7.9, 7.1, 7.5, 7.0, 6.2, 4.7]) * 1e3,
-    "mae_1f":    np.array([0.68, 0.61, 0.55, 0.98, 0.52, 0.45, 0.38, 0.48]),
-    "mae_20f":   np.array([0.07, 0.06, 0.05, 0.04, 0.06, 0.05, 0.04, 0.06]),
-    "sf_limit":  np.array([-117, -116, -116, -115, -117, -118, -119, -119]),
-}
-
-SNR3_THRESHOLD = -110.44
-HENE_TRUE = 632.8164
-HENE_MEAS = 632.842
-HENE_OFFSET_PM = 25.6
-HENE_SIGMA_SHORT_PM = 14.2
-HENE_THERMAL_PM_PER_K = 8.6
-
 print("nature_style LEGACY BACKUP loaded")
