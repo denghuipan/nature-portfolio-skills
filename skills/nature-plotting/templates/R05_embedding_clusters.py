@@ -27,22 +27,18 @@ names = [f"Cluster {i + 1}" for i in range(len(centres))]
 # -------------------------------------------
 cols = EDITORIAL[:7]
 fig, axs = plt.subplots(1, 2, figsize=figsize_mm(140, 64))
-fig.subplots_adjust(left=0.02, right=0.98, bottom=0.03, top=0.95, wspace=0.08)
-for ax in axs:
-    ax.set_aspect("equal"); ax.axis("off")
-    ax.annotate("", xy=(0.14, 0.02), xytext=(0.0, 0.02), xycoords="axes fraction",
-                arrowprops=dict(arrowstyle="-|>", lw=0.6, color="0.2", mutation_scale=5, shrinkA=0, shrinkB=0))
-    ax.annotate("", xy=(0.0, 0.17), xytext=(0.0, 0.02), xycoords="axes fraction",
-                arrowprops=dict(arrowstyle="-|>", lw=0.6, color="0.2", mutation_scale=5, shrinkA=0, shrinkB=0))
-    ax.text(0.0, -0.01, "Dim 1", transform=ax.transAxes, fontsize=6, va="top")
-    ax.text(-0.015, 0.02, "Dim 2", transform=ax.transAxes, fontsize=6, rotation=90, ha="right", va="bottom")
+fig.subplots_adjust(left=0.04, right=0.98, bottom=0.08, top=0.93, wspace=0.1)
+for ax in axs:                      # framed, no ticks: embedding coordinates carry no units
+    ax.set_aspect("equal"); ax.set_xticks([]); ax.set_yticks([])
+    ax.set_xlabel("Dim 1"); ax.set_ylabel("Dim 2")
+    ax.set_xlim(-4.2, 7.2); ax.set_ylim(-4.6, 5.6)
 a, b = axs
 a.scatter(P[:, 0], P[:, 1], s=1.2, c=[cols[k] for k in lab], lw=0, rasterized=True)
 for k, nm in enumerate(names):
     cx, cy = np.median(P[lab == k], 0)
-    a.text(cx, cy, nm, ha="center", va="center", fontsize=6, color="0.05",
+    a.text(cx, cy, nm, ha="center", va="center", color="0.05",
            bbox=dict(boxstyle="round,pad=0.15", fc="white", ec="none", alpha=0.75))
 sc = b.scatter(P[:, 0], P[:, 1], s=1.2, c=score, cmap=NS_DUSK.reversed(), vmin=-1, vmax=1, lw=0, rasterized=True)
-cbar_inset(b, sc, "Score", loc="upper left", width="26%", height="3%", ticks=[-1, 0, 1], borderpad=0.6)
-panel_label(a, "a", dx=0.0, dy=1.04); panel_label(b, "b", dx=0.0, dy=1.04)
+cbar_inset(b, sc, "Score", loc="lower right", width="26%", height="3%", ticks=[-1, 0, 1], borderpad=1.0)
+panel_label(a, "a", dx=-0.07, dy=1.07); panel_label(b, "b", dx=-0.07, dy=1.07)
 export(fig, "R05_embedding_clusters")

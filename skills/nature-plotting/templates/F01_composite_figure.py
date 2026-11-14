@@ -58,15 +58,10 @@ cbar_inset(c, hb, "Count", loc="lower right", width="32%", height="4%", borderpa
 d.scatter(emb[:, 0], emb[:, 1], s=0.8, c=[EDITORIAL[k] for k in lab], lw=0, rasterized=True)
 for k in range(5):
     cx, cy = np.median(emb[lab == k], 0)
-    d.text(cx, cy, f"C{k + 1}", ha="center", va="center", fontsize=6,
+    d.text(cx, cy, f"C{k + 1}", ha="center", va="center",
            bbox=dict(boxstyle="round,pad=0.12", fc="white", ec="none", alpha=0.75))
-d.set_aspect("equal"); d.axis("off")
-d.annotate("", xy=(0.18, 0.0), xytext=(0, 0), xycoords="axes fraction",
-           arrowprops=dict(arrowstyle="-|>", lw=0.6, color="0.2", mutation_scale=5, shrinkA=0, shrinkB=0))
-d.annotate("", xy=(0, 0.18), xytext=(0, 0), xycoords="axes fraction",
-           arrowprops=dict(arrowstyle="-|>", lw=0.6, color="0.2", mutation_scale=5, shrinkA=0, shrinkB=0))
-d.text(0, -0.03, "Dim 1", transform=d.transAxes, fontsize=6, va="top")
-d.text(-0.03, 0, "Dim 2", transform=d.transAxes, fontsize=6, rotation=90, ha="right", va="bottom")
+d.set_aspect("equal"); d.set_xticks([]); d.set_yticks([])
+d.set_xlim(-4.2, 4.6); d.set_ylim(-4.4, 4.8); d.set_xlabel("Dim 1"); d.set_ylabel("Dim 2")
 
 fan(e, t, np.median(runs, 0), [np.percentile(runs, [17, 83], 0), np.percentile(runs, [5, 95], 0)],
     THEMES["fan"][1], label="Ensemble median")
@@ -78,7 +73,7 @@ y = np.arange(10)
 for yi, s_, h_ in zip(y, score, half):
     col = PALETTE["blue"] if yi == 9 else "0.55"
     f.plot([s_ - h_, s_ + h_], [yi, yi], color=col, lw=0.8); f.plot(s_, yi, "o", color=col, ms=2.6)
-f.set_yticks(y, entries); f.tick_params(axis="y", length=0); despine(f, left=True)
+f.set_yticks(y, entries); f.tick_params(axis="y", length=0)
 f.set_xlabel("Score (95% CI)")
 for ax_, l, dx in ((b, "b", -0.36), (c, "c", -0.36), (d, "d", -0.1), (e, "e", -0.14), (f, "f", -0.5)):
     panel_label(ax_, l, dx=dx, dy=1.12)

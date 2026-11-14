@@ -30,14 +30,14 @@ for k, (p, col) in enumerate(zip(parts, cols)):
     b.barh(y, comp[:, k], left=left, color=col, height=0.62, lw=0.8, edgecolor="white")
     for yi, l, v in zip(y, left, comp[:, k]):
         if v >= 12:
-            b.text(l + v / 2, yi, f"{v}", ha="center", va="center", fontsize=6,
+            b.text(l + v / 2, yi, f"{v}", ha="center", va="center",
                    color="white" if k == 0 else "0.1")
     left += comp[:, k]
 b.set_yticks(y, groups); b.tick_params(axis="y", length=0)
-b.set_xlim(0, 100); b.set_xlabel("Share (%)"); despine(b, left=True)
+b.set_xlim(0, 100); b.set_xlabel("Share (%)")
 square_legend(b, parts, cols, loc="lower left", bbox=(0.0, 1.0), ncols=4, columnspacing=0.8)
 waffle(c, whole, cols, labels=None, legend=False)
-c.set_title("Each square = 1%", fontsize=6, color="0.35", pad=3)
+c.set_title("Each square = 1%", color="0.35", pad=3)
 fig.text(0.0, 0.99, "a", fontsize=8, fontweight="bold", va="top")
 fig.text(0.3, 0.99, "b", fontsize=8, fontweight="bold", va="top")
 fig.text(0.72, 0.99, "c", fontsize=8, fontweight="bold", va="top")

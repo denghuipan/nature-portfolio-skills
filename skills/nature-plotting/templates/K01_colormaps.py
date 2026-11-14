@@ -16,19 +16,17 @@ use_arial_math()                # maths ($x$, $\mu$) in the same sans face as th
 groups = [("Sequential", SEQUENTIAL), ("Diverging", DIVERGING), ("Cyclic", CYCLIC), ("True colour", SPECIAL)]
 # -------------------------------------------
 names = [(g, k, c) for g, d in groups for k, c in d.items()]
-fig = plt.figure(figsize=figsize_2col(100))
-gs = fig.add_gridspec(len(names), 2, width_ratios=[1.5, 1], hspace=0.9, wspace=0.3,
-                      left=0.13, right=0.98, top=0.97, bottom=0.09)
+fig = plt.figure(figsize=figsize_2col(130))
+gs = fig.add_gridspec(len(names), 2, width_ratios=[1.5, 1], hspace=1.5, wspace=0.3,
+                      left=0.13, right=0.98, top=0.96, bottom=0.07)
 grad = np.linspace(0, 1, 512)[None, :]
 for i, (g, k, c) in enumerate(names):
     ax = fig.add_subplot(gs[i, 0])
     ax.imshow(grad, aspect="auto", cmap=c)
     ax.set_xticks([]); ax.set_yticks([])
-    for s in ax.spines.values():
-        s.set_visible(False)
-    ax.text(-0.015, 0.5, k, transform=ax.transAxes, ha="right", va="center", fontsize=6)
+    ax.text(-0.015, 0.5, k, transform=ax.transAxes, ha="right", va="center")
     if i == 0 or names[i - 1][0] != g:
-        ax.text(1.0, 1.25, g, transform=ax.transAxes, ha="right", va="bottom", fontsize=6, color="0.4")
+        ax.text(0.0, 1.3, g, transform=ax.transAxes, ha="left", va="bottom", color="0.4")
 axL = fig.add_subplot(gs[:, 1])
 for g, d in groups[:3]:
     for k, c in d.items():
@@ -38,5 +36,5 @@ for g, d in groups[:3]:
 axL.set_xlim(0, 1); axL.set_ylim(0, 100)
 axL.set_xlabel("Position along map"); axL.set_ylabel("Lightness $L^*$")
 axL.text(0.5, 1.01, "solid: sequential; dashed: diverging; dotted: cyclic", transform=axL.transAxes,
-         ha="center", va="bottom", fontsize=6, color="0.4")
+         ha="center", va="bottom", color="0.4")
 export(fig, "K01_colormaps")

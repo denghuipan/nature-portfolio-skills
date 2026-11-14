@@ -41,5 +41,5 @@ for k, (i, j, txt) in enumerate(tests):
 ax.set_xticks(x); n_ticklabels(ax, groups, [len(d) for d in data])
 ax.tick_params(axis="x", length=0)
 ax.set_ylabel("Measured value (unit)")
-ax.set_ylim(0, top + 1.25); ax.set_yticks([0, 1, 2, 3]); ax.spines["left"].set_bounds(0, 3.5)
+ax.set_ylim(0, top + 1.25); ax.set_yticks([0, 1, 2, 3])
 export(fig, "D01_violin_box")

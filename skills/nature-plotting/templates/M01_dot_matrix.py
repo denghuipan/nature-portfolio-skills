@@ -33,7 +33,7 @@ sc = dot_matrix(ax, frac, mean, features, groups, cmap=NS_PURPLES, smax=42, vmin
 ax.xaxis.tick_top(); ax.tick_params(axis="x", labeltop=False, labelbottom=True, rotation=90)
 for a, b, nm in blocks:
     ax.plot([a - 0.3, b + 0.3], [-0.9, -0.9], color="0.2", lw=0.6, clip_on=False)
-    ax.text((a + b) / 2, -1.1, nm, ha="center", va="bottom", fontsize=6)
+    ax.text((a + b) / 2, -1.1, nm, ha="center", va="bottom")
 cax = fig.add_axes([0.85, 0.5, 0.025, 0.3])
 cb = fig.colorbar(sc, cax=cax, ticks=[0, 0.5, 1]); style_cbar(cb, "Mean level")
 key = fig.add_axes([0.83, 0.12, 0.15, 0.3]); key.axis("off")

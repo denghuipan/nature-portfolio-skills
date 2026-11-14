@@ -38,10 +38,9 @@ for yi, ((nm, v), c) in zip(y, zip(methods.items(), cols)):
     b.plot([q10, q90], [yi, yi], "o", color=c, ms=2.2)
     b.plot(q50, yi, "o", ms=4.2, mfc="white", mec=c, mew=1.0)
 b.set_xscale("log"); b.set_xlim(0.3, 50); b.set_xticks([1, 10], ["1", "10"])
-b.set_yticks(y, list(methods)); b.tick_params(axis="y", length=0); despine(b, left=True)
+b.set_yticks(y, list(methods)); b.tick_params(axis="y", length=0)
 b.set_ylim(-0.6, len(methods) - 0.4)
 b.set_xlabel("Error (unit)")
-b.text(0.5, 1.0, "10th, 50th (open), 90th percentile", transform=b.transAxes, ha="center", va="bottom",
-       fontsize=6, color="0.35")
+b.text(0.5, 1.0, "10th, 50th (open), 90th percentile", transform=b.transAxes, ha="center", va="bottom", color="0.35")
 panel_label(a, "a", dx=-0.14, dy=1.06); panel_label(b, "b", dx=-0.42, dy=1.06)
 export(fig, "D04_ecdf_quantiles")

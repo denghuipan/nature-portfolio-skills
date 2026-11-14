@@ -66,7 +66,7 @@ for i, name in enumerate(regions):
     a.axvline(d, color="0.15", ls=(0, (3, 2)), lw=0.5)
     subtitle(a, name, pad=2)
     a.set_xlim(2020, 2100); a.set_ylim(-75, 25)
-    a.set_xticks([2050, 2100]); a.set_yticks([-75, -50, -25, 0, 25])
+    a.set_xticks([2040, 2080]); a.set_yticks([-75, -50, -25, 0, 25])
     if i % 3:
         a.tick_params(labelleft=False)
     if i < 6:

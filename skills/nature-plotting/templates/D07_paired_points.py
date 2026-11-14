@@ -31,7 +31,7 @@ for x, v, col in ((-0.25, pre, "0.35"), (1.25, post, c)):
     a.errorbar(x, m, yerr=e, fmt="s", ms=3.2, color=col, elinewidth=0.8, capsize=0, zorder=4)
 sig_bracket(a, 0, 1, max(post.max(), pre.max()) + 4, p_value)
 a.set_xticks([0, 1], ["Condition 1", "Condition 2"]); a.tick_params(axis="x", length=0)
-a.set_xlim(-0.55, 1.55); a.set_ylabel("Response (unit)")
+a.set_xlim(-0.55, 1.55); a.set_ylim(None, max(post.max(), pre.max()) + 12); a.set_ylabel("Response (unit)")
 d = post - pre
 beeswarm(b, 0, d, c, width=0.25, s=6)
 b.errorbar(0.45, d.mean(), yerr=1.96 * d.std(ddof=1) / np.sqrt(n), fmt="o", ms=3.4, color="0.1",
@@ -39,6 +39,6 @@ b.errorbar(0.45, d.mean(), yerr=1.96 * d.std(ddof=1) / np.sqrt(n), fmt="o", ms=3
 b.axhline(0, color="0.3", lw=0.5)
 b.set_xlim(-0.5, 0.8); b.set_xticks([0], ["Difference"]); b.tick_params(axis="x", length=0)
 b.set_ylabel("Δ response (unit)")
-b.text(0.52, d.mean(), "  mean\n  95% CI", va="center", fontsize=6, color="0.3")
+b.text(0.52, d.mean(), "  mean\n  95% CI", va="center", color="0.3")
 panel_label(a, "a", dx=-0.32, dy=1.1); panel_label(b, "b", dx=-0.62, dy=1.1)
 export(fig, "D07_paired_points")

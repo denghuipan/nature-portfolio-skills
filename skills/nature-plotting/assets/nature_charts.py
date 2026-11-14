@@ -38,7 +38,7 @@ import matplotlib.transforms as mtransforms
 from matplotlib.patches import Rectangle, FancyArrowPatch, Polygon
 
 from nature_style import (PALETTE, CYCLE, THEMES, MM_PER_IN, SAVE_DPI, style_axes, save_fig, save_fig_exact,
-                          audit_text)
+                          audit_text, gradient_image, apply_backgrounds, _mix)
 from nature_cmaps import lighten, darken, HOUSE, HOUSE_DARK
 
 __all__ = [
@@ -53,7 +53,7 @@ __all__ = [
     "legend_box", "dashed_frame", "arrow_note", "kaplan_meier", "km_curve", "at_risk_table", "volcano",
     "dot_matrix", "size_legend", "alluvial", "beeswarm_x", "beeswarm", "paired_lines", "donut", "waffle",
     "zebra_table", "zoom_to", "highlight_points", "node_link", "hill", "fit_hill", "mean_sem", "overlay_bars",
-    "square_legend", "area_stack",
+    "square_legend", "area_stack", "gradient_fill", "gradient_patch", "gradient_patches", "gbarh", "gradient_band",
 ]
 
 
@@ -109,25 +109,23 @@ def ref_line(ax, value, axis="x", label=None, color="0.35", ls=":", lw=None, pos
     return ln
 
 
-def regime(ax, x0, x1, color="0.5", gradient=False, fade="in", alpha=(0.0, 0.12), label=None,
+def regime(ax, x0, x1, color="0.5", gradient=True, fade="in", alpha=(0.0, 0.28), label=None,
            label_color=None, label_rot=90, label_x=None, zorder=0.5):
-    """Shade an x-interval spanning the full height: a 'below detection limit', 'failure' or 'not accessible' zone.
-    Default: a flat light band. gradient=True draws a horizontal alpha ramp (fade='in': transparent at x0 -> alpha[1] at x1; 'out' reverse),
-    which reads as 'getting worse towards the edge' without a hard boundary."""
-    rgb = mcolors.to_rgb(color)
+    """Shade an x-interval over the full height: a window, a 'below limit' or 'not accessible' zone.
+    gradient=True (default) ramps the tint along x: fade='in' clear at x0 -> alpha[1] at x1, 'out' the reverse,
+    'center' strongest in the middle, 'up' a vertical ramp (strongest at the bottom). gradient=False: flat band."""
+    lo, hi = min(x0, x1), max(x0, x1)
+    c0, c1 = mcolors.to_rgba(color, alpha[0]), mcolors.to_rgba(color, alpha[1])
     if gradient:
-        a = np.linspace(alpha[0], alpha[1], 256)      # transparent at x0 -> strong at x1 (data order)
-        if fade == "out":
-            a = a[::-1]
-        if x1 < x0:                                   # image columns run from min(x) to max(x)
-            a = a[::-1]
-        img = np.ones((1, 256, 4)); img[..., :3] = rgb; img[0, :, 3] = a
-        yl = ax.get_ylim(); xl = ax.get_xlim()
-        ax.imshow(img, extent=(min(x0, x1), max(x0, x1), 0, 1), transform=ax.get_xaxis_transform(),
-                  aspect="auto", interpolation="bilinear", zorder=zorder)
-        ax.set_xlim(xl); ax.set_ylim(yl)
+        if fade == "center":
+            stops, d = [c0, c1, c0], "right"
+        elif fade == "up":
+            stops, d = [c1, c0], "up"
+        else:
+            stops, d = ([c0, c1] if (fade == "in") == (x1 >= x0) else [c1, c0]), "right"
+        gradient_image(ax, (lo, hi, 0, 1), stops, direction=d, coords="x", zorder=zorder)
     else:
-        ax.axvspan(x0, x1, color=rgb, alpha=alpha[1], lw=0, zorder=zorder)
+        ax.axvspan(x0, x1, color=color, alpha=alpha[1], lw=0, zorder=zorder)
     if label:
         lx = label_x if label_x is not None else (x0 + x1) / 2
         ax.text(lx, 0.5, label, rotation=label_rot, transform=ax.get_xaxis_transform(),
@@ -484,10 +482,10 @@ def ecdf(ax, values, color, label=None, lw=None, **kw):
     return ax.step(np.r_[v[0], v], np.r_[0, y], where="post", color=color, lw=lw, label=label, **kw)[0]
 
 
-def ridgeline(ax, x, ys, colors, offset=1.0, scale=1.0, fill="solid", fill_alpha=0.45, lw=None,
+def ridgeline(ax, x, ys, colors, offset=1.0, scale=1.0, fill="gradient", fill_alpha=0.45, lw=None,
               labels_left=None, labels_right=None, label_colors=None, baseline=False, zorder_step=1):
     """Offset stack of curves (spectra, distributions, profiles). Bottom curve = first item.
-    fill: 'solid' (light tint, default), 'gradient' (alpha ramp), or None. Returns list of y-offsets."""
+    fill: 'gradient' (alpha ramp, default), 'solid' (light tint), or None. Returns list of y-offsets."""
     lw = lw or mpl.rcParams["lines.linewidth"] * 0.8
     offs = []
     n = len(ys)
@@ -514,14 +512,17 @@ def ridgeline(ax, x, ys, colors, offset=1.0, scale=1.0, fill="solid", fill_alpha
 
 # =================================================================================================== comparison
 def bars(ax, x, heights, colors=None, err=None, width=0.62, alpha=1.0, edge="none", points=None, point_color="0.2",
-         labels=None, label_fmt="{:.2g}", hatch=None, capsize=0.0):
-    """Bars (flat fill, no outline by default; edge='auto' for a darker outline) with optional error bars,
-    overlaid individual points and value labels."""
+         labels=None, label_fmt="{:.2g}", hatch=None, capsize=0.0, gradient=True, light=0.62):
+    """Bars with optional error bars, overlaid individual points and value labels. gradient=True (default)
+    fills each bar from a light tint at the base to its colour at the top; edge='auto' adds a darker outline."""
     colors = colors or [HOUSE[0]] * len(heights)
     lw = mpl.rcParams["axes.linewidth"]
     b = ax.bar(x, heights, width=width, color=[mcolors.to_rgba(c, alpha) for c in colors],
                edgecolor=[darken(c, 0.25) for c in colors] if edge == "auto" else edge,
                lw=lw if edge != "none" else 0, zorder=2, hatch=hatch)
+    if gradient:
+        for p, c, h in zip(b.patches, colors, heights):
+            gradient_patch(ax, p, mcolors.to_rgba(c, alpha), light=light, direction="up" if h >= 0 else "down")
     if err is not None:
         ax.errorbar(x, heights, yerr=err, fmt="none", ecolor="0.15", elinewidth=lw, capsize=capsize,
                     capthick=lw, zorder=4)
@@ -532,6 +533,44 @@ def bars(ax, x, heights, colors=None, err=None, width=0.62, alpha=1.0, edge="non
         for xi, h in zip(x, heights):
             direct_label(ax, xi, h, label_fmt.format(h), dx=0, dy=2, ha="center", va="bottom")
     return b
+
+
+def gradient_patches(ax, patches, color, light=0.7, direction="up", zorder=None):
+    """One shared gradient across many patches (histogram bars, a bar series): light tint at the bottom of the
+    tallest patch -> *color* at its top, so heights read against a single colour scale."""
+    from matplotlib.path import Path as _P
+    from matplotlib.patches import PathPatch as _PP
+    paths = [p.get_path().transformed(p.get_patch_transform()) for p in patches if p.get_height() != 0]
+    if not paths:
+        return None
+    comp = _P.make_compound_path(*paths)
+    clip = _PP(comp, facecolor="none", edgecolor="none", transform=ax.transData)
+    ax.add_patch(clip)
+    ext = comp.get_extents()
+    z = patches[0].get_zorder() + 0.01 if zorder is None else zorder
+    if ax.get_yscale() == "log":                 # log counts: start the ramp at the visible bottom
+        lo_ = min(p.get_y() + p.get_height() for p in patches if p.get_height() > 0) * 0.5
+        ylo = ax.get_ylim()[0]
+        ext = mtransforms.Bbox.from_extents(ext.x0, max(ext.y0, ylo if ylo > 0 else lo_), ext.x1, ext.y1)
+    return gradient_image(ax, (ext.x0, ext.x1, ext.y0, ext.y1), [_mix(color, light), mcolors.to_rgba(color)],
+                          direction=direction, clip=clip, zorder=z)
+
+
+def gbarh(ax, y, widths, colors, height=0.6, left=0.0, light=0.62, **kw):
+    """Horizontal bars with a left-to-right gradient (light tint at the base -> colour at the end)."""
+    widths = np.atleast_1d(widths); y = np.atleast_1d(y)
+    colors = [colors] * len(widths) if isinstance(colors, str) or np.ndim(colors) == 1 and len(colors) in (3, 4) \
+        and not isinstance(colors[0], str) else colors
+    b = ax.barh(y, widths, left=left, height=height, color=colors, lw=0, **kw)
+    for p, c, w in zip(b.patches, colors, widths):
+        gradient_patch(ax, p, c, light=light, direction="right" if w >= 0 else "left")
+    return b
+
+
+def gradient_band(ax, y0, y1, color, alpha=(0.0, 0.3), direction="up", zorder=0.4):
+    """Full-width horizontal band between y0 and y1 (data units) with a vertical gradient."""
+    return gradient_image(ax, (0, 1, y0, y1), [mcolors.to_rgba(color, alpha[0]), mcolors.to_rgba(color, alpha[1])],
+                          direction=direction, coords="y", zorder=zorder)
 
 
 def grouped_bars(ax, groups, series, values, err=None, colors=None, width=0.8, points=None, legend=True,
@@ -703,8 +742,6 @@ def heatmap(ax, Z, xlabels=None, ylabels=None, cmap="ns_reds", norm=None, annota
         ax.set_yticks(np.arange(ny), ylabels)
     ax.tick_params(which="both", length=0)
     ax.minorticks_off()
-    for s in ax.spines.values():
-        s.set_visible(False)
     if annotate:
         cm_ = mpl.colormaps[cmap] if isinstance(cmap, str) else cmap
         nrm = m.norm
@@ -841,17 +878,37 @@ def landscape(ax, entries, styles, this_work=None, label_key="ref", number_color
 # mirrored (left/right) bar charts, scenario fans, binned trends, dashed legend boxes, survival curves,
 # volcano and dot-matrix plots, flows between stages, swarms, part-of-whole charts and table figures.
 
-def _ramp_fill(ax, x, y, color, alpha=0.40, ymin=0.0, zorder=1):
-    """Vertical alpha ramp under a curve (transparent at ymin -> alpha at the top)."""
+def gradient_fill(ax, x, y, color, alpha=0.45, ymin=None, zorder=1, alpha_bottom=0.0):
+    """Area under a curve filled with a vertical gradient: alpha at the curve's top fading to alpha_bottom at
+    ymin (default: the current lower y limit). Does not change the data limits."""
     x = np.asarray(x, float); y = np.asarray(y, float)
-    grad = np.ones((256, 1, 4)); grad[..., :3] = mcolors.to_rgb(color)
-    grad[:, 0, 3] = np.linspace(0, alpha, 256)
-    im = ax.imshow(grad, aspect="auto", origin="lower", extent=(x.min(), x.max(), ymin, y.max()), zorder=zorder)
+    ymin = ax.get_ylim()[0] if ymin is None else ymin
     clip = Polygon(np.column_stack([np.r_[x, x[::-1]], np.r_[y, np.full_like(y, ymin)]]), closed=True,
                    facecolor="none", edgecolor="none", transform=ax.transData)
     ax.add_patch(clip)
-    im.set_clip_path(clip)
-    return im
+    return gradient_image(ax, (x.min(), x.max(), min(ymin, y.min()), y.max()),
+                          [mcolors.to_rgba(color, alpha_bottom), mcolors.to_rgba(color, alpha)], direction="up",
+                          clip=clip, zorder=zorder)
+
+
+_ramp_fill = gradient_fill
+
+
+def _log_safe(ax, x0, x1, y0, y1):
+    """Bars on a log axis start at 0; move that edge to a small positive value so the gradient has an extent."""
+    if ax.get_yscale() == "log" and y0 <= 0:
+        y0 = (y1 if y1 > 0 else 1.0) * 1e-3
+    if ax.get_xscale() == "log" and x0 <= 0:
+        x0 = (x1 if x1 > 0 else 1.0) * 1e-3
+    return x0, x1, y0, y1
+
+
+def gradient_patch(ax, patch, color, light=0.6, direction="up", zorder=None):
+    """Fill an existing patch (bar, wedge, box) with a gradient from a light tint (bottom / left) to *color*."""
+    ext = patch.get_path().get_extents(patch.get_patch_transform())
+    lo = _mix(color, light)
+    return gradient_image(ax, _log_safe(ax, ext.x0, ext.x1, ext.y0, ext.y1), [lo, mcolors.to_rgba(color)],
+                          direction=direction, clip=patch, zorder=(patch.get_zorder() + 0.01) if zorder is None else zorder)
 
 
 def sig_bracket(ax, x0, x1, y, text="***", h=None, color="0.15", lw=None, fontsize=None, vertical=False,
@@ -907,7 +964,7 @@ def butterfly(ax, labels, left, right, colors=None, gap=0.22, height=0.62, fmt="
     elif isinstance(colors, str) or (len(colors) in (3, 4) and not isinstance(colors[0], (str, tuple, list))):
         colors = [colors] * n
 
-    span = (1 - gap) * 0.82                               # leave room for the count labels
+    span = (1 - gap) * 0.72                               # leave room for the count labels
 
     def scale(v):
         if log:
@@ -915,8 +972,12 @@ def butterfly(ax, labels, left, right, colors=None, gap=0.22, height=0.62, fmt="
         return span * v / xmax
     for yi, l, r, c in zip(y, left, right, colors):
         wl, wr = scale(l), scale(r)
-        ax.barh(yi, -wl, left=-gap, height=height, color=c, lw=0)
-        ax.barh(yi, wr, left=gap, height=height, color=c, lw=0)
+        bl = ax.barh(yi, -wl, left=-gap, height=height, color=c, lw=0)
+        br = ax.barh(yi, wr, left=gap, height=height, color=c, lw=0)
+        if wl > 0:
+            gradient_patch(ax, bl.patches[0], c, light=0.6, direction="left")
+        if wr > 0:
+            gradient_patch(ax, br.patches[0], c, light=0.6, direction="right")
         ax.text(-gap - wl - 0.015, yi, fmt.format(int(l)), ha="right", va="center", fontsize=fs, color="0.1")
         ax.text(gap + wr + 0.015, yi, fmt.format(int(r)), ha="left", va="center", fontsize=fs, color="0.1")
     for yi, lab in zip(y, labels):
@@ -1104,8 +1165,6 @@ def dot_matrix(ax, frac, value, xlabels, ylabels, cmap="ns_purples", smax=38.0, 
     ax.set_yticks(np.arange(nr), ylabels)
     ax.set_xlim(-0.6, nc - 0.4); ax.set_ylim(nr - 0.4, -0.6)
     ax.tick_params(length=0)
-    for sp in ax.spines.values():
-        sp.set_visible(False)
     return sc
 
 
@@ -1241,7 +1300,7 @@ def donut(ax, values, colors, labels=None, width=0.34, start=90, center_text=Non
         ax.text(label_dist * np.cos(ang), label_dist * np.sin(ang), txt, ha="center", va="center", fontsize=fs)
     if center_text:
         ax.text(0, 0, center_text, ha="center", va="center", fontsize=mpl.rcParams["axes.labelsize"])
-    ax.set_aspect("equal")
+    ax.set_aspect("equal"); ax.axis("off")
     return wedges
 
 
@@ -1368,6 +1427,12 @@ def overlay_bars(ax, x, front, back, colors, labels=None, width=0.8, log=False):
                 edgecolor="white", linewidth=0.6)
     if log:
         ax.set_yscale("log")
+    for bb, c in ((b0, colors[0]), (b1, colors[1])):
+        for p in bb.patches:
+            if p.get_height() > 0:
+                gradient_patch(ax, p, c, light=0.35)
+    if log:
+        ax.set_yscale("log")
     return b0, b1
 
 
@@ -1379,14 +1444,21 @@ def square_legend(ax, labels, colors, loc="upper left", bbox=None, ncols=1, size
 
 
 def area_stack(ax, x, ys, colors, labels=None, alpha=1.0, edge="white", lw=0.4, direct=True, fontsize=None,
-               label_x=None):
+               label_x=None, gradient=True, light=0.45):
     """Stacked areas (composition over time) with thin white separators and optional direct labels placed in
-    the middle of each layer at label_x (default: 85 % along x)."""
+    the middle of each layer at label_x (default: 85 % along x). gradient=True shades every layer from a light
+    tint (bottom of the plot) to its colour (top)."""
     ys = np.asarray(ys, float)
     cum = np.cumsum(ys, axis=0)
     base = np.zeros_like(cum[0])
     for i, (top, c) in enumerate(zip(cum, colors)):
-        ax.fill_between(x, base, top, color=c, alpha=alpha, lw=0, zorder=1)
+        poly = ax.fill_between(x, base, top, color=c, alpha=alpha, lw=0, zorder=1)
+        if gradient:
+            clip = Polygon(np.column_stack([np.r_[x, np.asarray(x)[::-1]], np.r_[top, base[::-1]]]), closed=True,
+                           facecolor="none", edgecolor="none", transform=ax.transData)
+            ax.add_patch(clip)
+            gradient_image(ax, (np.min(x), np.max(x), 0, cum[-1].max()), [_mix(c, light), mcolors.to_rgba(c)],
+                           clip=clip, zorder=1.01)
         ax.plot(x, top, color=edge, lw=lw, zorder=2)
         if direct and labels:
             xi = label_x if label_x is not None else x[0] + 0.85 * (x[-1] - x[0])
@@ -1404,10 +1476,11 @@ def export(fig, name, outdir=None, exact=False, audit=True):
     * normal use: PNG (600 dpi) + PDF via nature_style.save_fig (or save_fig_exact for full-page layouts);
     * gallery build (env NATURE_GALLERY=<dir>): one 200-dpi PNG preview into that folder.
     Prints any text outside 5-8 pt (Nature minimum 5 pt) when audit=True."""
+    apply_backgrounds(fig)
     if audit:
-        bad = audit_text(fig, show=False)
+        bad = audit_text(fig, show=False, uniform=True)
         if bad:
-            print(f"[export] {name}: {len(bad)} text items outside 5-8 pt -> " +
+            print(f"[export] {name}: {len(bad)} text items off the house size / face -> " +
                   ", ".join(f"{s:.1f} pt '{t[:18]}'" for s, t in bad[:6]))
     gal = os.environ.get("NATURE_GALLERY")
     if gal:

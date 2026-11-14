@@ -22,7 +22,9 @@ total = np.round(total, -2)
 # -------------------------------------------
 dark, light = THEMES["duo_purple"]
 fig, ax = plt.subplots(figsize=figsize_mm(89, 58))
-ax.bar(q, total, width=0.23, color=[light if s == 0 else dark for s in src], lw=0, align="edge")
+bb = ax.bar(q, total, width=0.23, color=[light if s == 0 else dark for s in src], lw=0, align="edge")
+for p_, s_ in zip(bb.patches, src):
+    gradient_patch(ax, p_, light if s_ == 0 else dark, light=0.55)
 ax.set_xlim(2018, 2023); ax.set_ylim(0, 420000)
 ax.set_xticks([2019, 2020, 2021, 2022], ["2019", "2020", "2021", "2022"])
 thousands(ax, "y")

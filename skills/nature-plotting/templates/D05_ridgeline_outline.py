@@ -30,13 +30,14 @@ for i, (s, c) in enumerate(zip(samples, cols)):
     y0 = (len(levels) - 1 - i) * off
     z = 10 + i
     ax.fill_between(grid, y0, y0 + d, color="white", lw=0, zorder=z)
-    ax.fill_between(grid, y0, y0 + d, color=c, alpha=0.18, lw=0, zorder=z + 0.1)
+    gradient_fill(ax, grid, y0 + d, c, alpha=0.55, ymin=y0, zorder=z + 0.1)
     ax.plot(grid, y0 + d, color=c, lw=0.9, zorder=z + 0.2)
     ax.plot([grid[0], grid[-1]], [y0, y0], color=c, lw=0.4, zorder=z + 0.2)
     m = np.median(s)
     ax.plot([m, m], [y0, y0 + np.interp(m, grid, d)], color=darken(c, 0.2), lw=0.6, zorder=z + 0.3)
-    ax.text(-1.6, y0 + 0.12, levels[i], ha="right", va="bottom", fontsize=6, color=darken(c, 0.25))
+    ax.text(-1.6, y0 + 0.12, levels[i], ha="right", va="bottom", color=darken(c, 0.25))
 ax.set_xlim(-1.5, 4.5); ax.set_ylim(-0.1, (len(levels) - 1) * off + 1.1)
-despine(ax, left=True); ax.set_yticks([])
+ax.set_yticks([])
 ax.set_xlabel("Value (unit)")
+no_background(ax)                 # the ridges carry their own gradients; a panel gradient would show through
 export(fig, "D05_ridgeline_outline")

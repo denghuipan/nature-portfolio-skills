@@ -26,8 +26,8 @@ ax = fig.add_axes([0, 0, 1, 1]); canvas(ax, W, H)
 cycle_diagram(ax, 32, 31, 17, steps, colors=[PASTEL[c][1] for c in cols], node_text=[str(i + 1) for i in range(5)],
               node_r=4.0)
 label(ax, 32, 31, centre_note, size=1.0, color="0.3", linespacing=1.2)
-label(ax, 2, 59, "a", ha="left", va="top", size=1.33, fontweight="bold")
-label(ax, 74, 59, "b", ha="left", va="top", size=1.33, fontweight="bold")
+letter(ax, 2, 59, "a")
+letter(ax, 74, 59, "b")
 ch = chevrons(ax, 80, 40, 100, 9, steps, colors=[PASTEL[c][0] for c in cols], tip=2.5, gap=0.8)
 for b, c in zip(ch, cols):
     ax.add_patch(plt.Polygon([(b.x, b.y), (b.x + b.w - 2.5, b.y)], closed=False, ec=PASTEL[c][1], lw=0.8))

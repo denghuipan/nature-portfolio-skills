@@ -30,18 +30,16 @@ ax = fig.add_axes([0.2, 0.2, 0.5, 0.72]); bx = fig.add_axes([0.72, 0.2, 0.2, 0.7
 ax.imshow(P, cmap=NS_BLUES, vmin=0, vmax=1)
 for i in range(5):
     for j in range(5):
-        ax.text(j, i, f"{100 * P[i, j]:.0f}", ha="center", va="center", fontsize=6,
+        ax.text(j, i, f"{100 * P[i, j]:.0f}", ha="center", va="center",
                 color="white" if P[i, j] > 0.55 else "0.15")
 ax.set_xticks(range(5), classes, rotation=45, ha="right"); ax.set_yticks(range(5), classes)
 ax.tick_params(length=0)
-for s in ax.spines.values():
-    s.set_visible(False)
 ax.set_xlabel("Predicted class"); ax.set_ylabel("True class")
-ax.set_title("Row-normalised (%)", fontsize=6, color="0.35", pad=3)
-bx.barh(range(5), support, color=PALETTE["lightgrey"], height=0.6, lw=0)
+ax.set_title("Row-normalised (%)", color="0.35", pad=3)
+gbarh(bx, range(5), support, PALETTE["sky"], height=0.6)
 for i, v in enumerate(support):
-    bx.text(v + 40, i, f"{v:,}", va="center", fontsize=6)
-bx.set_xlim(0, support.max() * 1.6); bx.set_xticks([]); despine(bx, left=True, bottom=True)
+    bx.text(v + 40, i, f"{v:,}", va="center")
+bx.set_xlim(0, support.max() * 1.6); bx.set_xticks([])
 bx.tick_params(labelleft=False)
-bx.set_title("Support (n)", fontsize=6, color="0.35", pad=3)
+bx.set_title("Support (n)", color="0.35", pad=3)
 export(fig, "M04_confusion_support")

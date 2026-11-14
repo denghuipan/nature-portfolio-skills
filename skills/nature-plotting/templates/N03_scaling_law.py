@@ -38,7 +38,7 @@ p = np.polyfit(np.log10(grid[2:-2]), np.log10(front[2:-2] - E0), 1)
 ax.plot(grid, E0 + 10 ** np.polyval(p, np.log10(grid)), color="0.05", lw=0.9, ls=(0, (4, 2)))
 xm = 1e16
 ax.text(xm, (E0 + 10 ** np.polyval(p, np.log10(xm))) * 0.95,
-        f"$L = {E0} + {10 ** p[1]:.0f}\\,C^{{{p[0]:.3f}}}$", fontsize=6, rotation=-17, ha="center", va="top")
+        f"$L = {E0} + {10 ** p[1]:.0f}\\,C^{{{p[0]:.3f}}}$", rotation=-17, ha="center", va="top")
 ax.set_xscale("log"); ax.set_yscale("log")
 ax.set_xlim(3e13, 3e20); ax.set_ylim(1.9, 4.6)
 ax.set_yticks([2, 2.5, 3, 4], ["2", "2.5", "3", "4"]); ax.yaxis.set_minor_locator(mticker.NullLocator())

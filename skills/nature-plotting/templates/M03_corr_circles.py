@@ -32,14 +32,15 @@ for i in range(k):
             ax.add_patch(plt.Circle((j, i), 0.46 * np.sqrt(abs(R[i, j])), color=NS_DIV_BR(norm(R[i, j])), lw=0))
         elif i < j:
             sig = abs(R[i, j]) * np.sqrt((n_obs - 2) / (1 - R[i, j] ** 2)) > 2.0
-            ax.text(j, i, f"{R[i, j]:.2f}".replace("-", "−"), ha="center", va="center", fontsize=6,
+            ax.text(j, i, f"{R[i, j]:.2f}".replace("-", "−"), ha="center", va="center",
                     color=darken(NS_DIV_BR(norm(R[i, j])), 0.2) if sig else "0.55",
                     fontweight="bold" if sig else "normal")
         else:
-            ax.text(j, i, names[i], ha="center", va="center", fontsize=6)
-ax.set_xlim(-0.5, k - 0.5); ax.set_ylim(k - 0.5, -0.5); ax.set_aspect("equal"); ax.axis("off")
+            ax.text(j, i, names[i], ha="center", va="center")
+ax.set_xlim(-0.5, k - 0.5); ax.set_ylim(k - 0.5, -0.5); ax.set_aspect("equal")
+ax.set_xticks([]); ax.set_yticks([]); no_background(ax)
 sm = mpl.cm.ScalarMappable(norm=norm, cmap=NS_DIV_BR)
 cax = fig.add_axes([0.87, 0.25, 0.025, 0.5])
 cb = fig.colorbar(sm, cax=cax, ticks=[-1, -0.5, 0, 0.5, 1]); style_cbar(cb, "Pearson $r$")
-ax.text(k - 0.5, k - 0.3, f"Bold: P < 0.05 (n = {n_obs})", ha="right", va="top", fontsize=6, color="0.4")
+ax.text(k - 0.5, k - 0.3, f"Bold: P < 0.05 (n = {n_obs})", ha="right", va="top", color="0.4")
 export(fig, "M03_corr_circles")

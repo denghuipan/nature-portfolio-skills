@@ -4,17 +4,23 @@ nature_style.py
 House plotting style for Nature-family journals (Nature, Nature Communications, Nature Methods ...):
 rcParams, print sizes, palettes, axis "looks", export and pre-submission checks.
 
-The default look follows what most recent Nature-family figures share: open L-shaped axes (left and bottom
-spines only), short outward ticks, no minor ticks, thin 0.6 pt axes and ~1 pt data lines, frameless legends,
-muted colours and generous white space. Other looks are one call away:
+Default look: every panel in a full frame (0.6 pt), short inward ticks on the bottom and left axes, no minor
+ticks, ~1 pt data lines, frameless legends, muted colours, ONE font size for all text (7 pt Arial; panel
+letters 8 pt bold) and a soft vertical gradient behind the data of every plotting panel. Other looks:
 
-    set_look("open")      default: L-axes, outward ticks, no minor ticks
-    set_look("grid")      open + faint horizontal grid (dense bar charts, time series)
+    set_look("boxed")     default: full frame, inward ticks (bottom / left), gradient panel background
+    set_look("open")      L-shaped axes, outward ticks
+    set_look("grid")      boxed + faint horizontal grid (dense bar charts, time series)
     set_look("framed")    full frame, outward ticks, faint grid (log-log physics / benchmark plots)
-    set_look("classic")   full frame, inward ticks on four sides, minor ticks, the older bright palette
+    set_look("classic")   full frame, inward ticks on four sides, minor ticks, older bright palette, no gradient
+
+Panel backgrounds: set_background("gradient" | "none", color=..., strength=...) for the whole figure set,
+bg_gradient(ax, color) for one panel, no_background(ax) to keep one panel plain. Backgrounds are added when
+the figure is saved (save_fig / save_fig_exact / nature_charts.export), to every axes with a frame that is not
+an image, a heat map, a colour bar, a polar or a 3-D axes.
 
 Print sizes use the Nature Portfolio guide: 89 mm (single column) / 183 mm (double), at most 170 mm tall,
-5-7 pt Arial. ``apply_preset("preview")`` gives large type for slides and group meetings.
+5-7 pt Arial. ``apply_preset("preview")`` gives large type (one size, 9 pt) for slides.
 
 Usage:
     from nature_style import *
@@ -47,14 +53,19 @@ HEIGHT_1COL_TALL_MM = 100
 
 SAVE_DPI = 600
 
+# One font size for every piece of text (labels, ticks, legends, titles, annotations, colour bars); only the
+# panel letters differ (8 pt bold, Nature rule).
+FONT_PT = {"np_final": 7.0, "preview": 9.0}
+
+
+def _sizes(pt):
+    return {k: pt for k in ("font.size", "axes.labelsize", "axes.titlesize", "xtick.labelsize", "ytick.labelsize",
+                            "legend.fontsize", "legend.title_fontsize", "figure.titlesize")}
+
+
 _PRESETS = {
     "np_final": {
-        "font.size": 7,
-        "axes.labelsize": 7,
-        "axes.titlesize": 7,
-        "xtick.labelsize": 6,
-        "ytick.labelsize": 6,
-        "legend.fontsize": 6,
+        **_sizes(FONT_PT["np_final"]),
         "lines.linewidth": 1.0,
         "lines.markersize": 3.5,
         "axes.linewidth": 0.6,
@@ -72,12 +83,7 @@ _PRESETS = {
         "panel_label_size": 8,
     },
     "preview": {
-        "font.size": 9,
-        "axes.labelsize": 10,
-        "axes.titlesize": 10,
-        "xtick.labelsize": 9,
-        "ytick.labelsize": 9,
-        "legend.fontsize": 8,
+        **_sizes(FONT_PT["preview"]),
         "lines.linewidth": 1.5,
         "lines.markersize": 5,
         "axes.linewidth": 0.9,
@@ -101,16 +107,17 @@ _PRESET_ALIASES = {"mock": "preview"}          # old name kept so earlier script
 _ACTIVE_PRESET = "np_final"
 _PANEL_LABEL_SIZE = _PRESETS["np_final"]["panel_label_size"]
 
-# Arial first (Nature house face); Helvetica / Liberation Sans (metric clone of Arial on Linux) as fall-backs.
-# Only installed families are listed, so matplotlib does not print "findfont" warnings on machines without Arial.
-_FONT_PREFS = ["Arial", "Helvetica", "Liberation Sans", "DejaVu Sans"]
+# Arial everywhere (Nature house face). Where Arial is not installed (most Linux servers) its metric clones
+# Liberation Sans / Arimo take its place with identical glyph widths, so layouts do not move; Windows and
+# macOS always use Arial itself. Only installed families are listed (no "findfont" warnings).
+_FONT_PREFS = ["Arial", "Liberation Sans", "Arimo", "Helvetica", "DejaVu Sans"]
 
 
 def _available_fonts(prefs=_FONT_PREFS):
     from matplotlib import font_manager
     have = {f.name for f in font_manager.fontManager.ttflist}
     out = [f for f in prefs if f in have]
-    return out or ["DejaVu Sans"]
+    return (out[:1] + [f for f in out[1:] if f == "DejaVu Sans"]) or ["DejaVu Sans"]   # one face (+ glyph fallback)
 
 
 FONT_FAMILY = _available_fonts()
@@ -150,6 +157,13 @@ _BASE_RCPARAMS = {
 
 # axis looks: which spines, tick direction / sides, minor ticks, grid
 _LOOKS = {
+    "boxed": {
+        "axes.spines.top": True, "axes.spines.right": True,
+        "xtick.direction": "in", "ytick.direction": "in",
+        "xtick.top": False, "ytick.right": False,
+        "xtick.minor.visible": False, "ytick.minor.visible": False,
+        "axes.grid": False,
+    },
     "open": {
         "axes.spines.top": False, "axes.spines.right": False,
         "xtick.direction": "out", "ytick.direction": "out",
@@ -158,8 +172,8 @@ _LOOKS = {
         "axes.grid": False,
     },
     "grid": {
-        "axes.spines.top": False, "axes.spines.right": False,
-        "xtick.direction": "out", "ytick.direction": "out",
+        "axes.spines.top": True, "axes.spines.right": True,
+        "xtick.direction": "in", "ytick.direction": "in",
         "xtick.top": False, "ytick.right": False,
         "xtick.minor.visible": False, "ytick.minor.visible": False,
         "axes.grid": True, "axes.grid.axis": "y", "axes.grid.which": "major",
@@ -179,7 +193,7 @@ _LOOKS = {
         "axes.grid": False,
     },
 }
-_ACTIVE_LOOK = "open"
+_ACTIVE_LOOK = "boxed"
 
 
 def mm_to_in(mm):
@@ -283,10 +297,11 @@ def desaturate_cmap(cmap, k, n=256):
     return mcolors.ListedColormap(rgb, name=f"{cmap.name}_x{k}")
 
 
-def set_look(name="open", palette=None):
-    """Switch the axis look for every figure made afterwards: open | grid | framed | classic.
-    ``classic`` also switches PALETTE / CYCLE to the older bright set (unless palette= is given);
-    the others use EDITORIAL. PALETTE and CYCLE are changed in place, so names imported earlier stay valid."""
+def set_look(name="boxed", palette=None, background=None):
+    """Switch the axis look for every figure made afterwards: boxed | open | grid | framed | classic.
+    ``classic`` also switches PALETTE / CYCLE to the older bright set and turns panel backgrounds off (unless
+    palette= / background= say otherwise); the others use EDITORIAL with gradient backgrounds.
+    PALETTE and CYCLE are changed in place, so names imported earlier stay valid."""
     global _ACTIVE_LOOK
     if name not in _LOOKS:
         raise ValueError(f"Unknown look {name!r}; choose from {list(_LOOKS)}")
@@ -298,12 +313,124 @@ def set_look(name="open", palette=None):
     PALETTE.clear(); PALETTE.update(src_p)
     CYCLE[:] = src_c
     mpl.rcParams["axes.prop_cycle"] = mpl.cycler(color=CYCLE)
+    if background is None:
+        background = "none" if name == "classic" else "gradient"
+    set_background(background)
     if name == "classic":
         mpl.rcParams.update({"xtick.major.size": 3.5, "ytick.major.size": 3.5,
                              "axes.linewidth": 0.8, "xtick.major.width": 0.8, "ytick.major.width": 0.8,
                              "lines.linewidth": 1.5})
     else:
         apply_preset(_ACTIVE_PRESET)
+
+
+# ---------------- gradients and panel backgrounds ----------------
+from matplotlib.image import BboxImage as _BboxImage
+from matplotlib.transforms import Bbox as _Bbox, TransformedBbox as _TBbox
+from matplotlib.transforms import blended_transform_factory as mtransforms_blend
+
+_BACKGROUND = {"mode": "gradient", "color": "#D3DFEE", "strength": 1.0, "direction": "up", "to": "#FCFDFE"}
+
+
+def _mix(c, k, other="#FFFFFF"):
+    """Blend colour c with *other* (k = 0: c, k = 1: other)."""
+    a, b = np.array(mcolors.to_rgba(c)), np.array(mcolors.to_rgba(other))
+    return tuple(a * (1 - k) + b * k)
+
+
+def gradient_array(stops, n=256, direction="up"):
+    """RGBA array for a linear gradient through *stops* (colours, or (position, colour) pairs).
+    direction: 'up' (first stop at the bottom), 'down', 'right' (first stop at the left), 'left'."""
+    if not isinstance(stops[0], (tuple, list)) or isinstance(stops[0][0], str) or len(stops[0]) != 2:
+        stops = [(i / (len(stops) - 1), c) for i, c in enumerate(stops)]
+    pos = np.array([p for p, _ in stops]); cols = np.array([mcolors.to_rgba(c) for _, c in stops])
+    t = np.linspace(0, 1, n)
+    g = np.stack([np.interp(t, pos, cols[:, k]) for k in range(4)], axis=1)
+    if direction in ("down", "left"):
+        g = g[::-1]
+    return g[:, None, :] if direction in ("up", "down") else g[None, :, :]
+
+
+def gradient_image(ax, extent, stops, direction="up", coords="data", clip=None, zorder=0.5, alpha=None):
+    """Paint a linear gradient into a rectangle of *ax* without touching its data limits.
+    extent = (x0, x1, y0, y1) in data units (coords='data'), axes fraction (coords='axes'), x in data and y in
+    axes fraction (coords='x': a full-height window) or the reverse (coords='y': a full-width band).
+    clip: a Patch (in the same coordinates, added to ax or with its transform set) to cut the gradient to
+    (bar outline, area under a curve, rounded box). Returns the BboxImage."""
+    x0, x1, y0, y1 = extent
+    tr = {"data": ax.transData, "axes": ax.transAxes,
+          "x": mtransforms_blend(ax.transData, ax.transAxes), "y": mtransforms_blend(ax.transAxes, ax.transData)}[coords]
+    im = _BboxImage(_TBbox(_Bbox.from_extents(x0, y0, x1, y1), tr), data=gradient_array(stops, direction=direction),
+                    origin="lower", interpolation="bilinear", zorder=zorder)
+    if alpha is not None:
+        im.set_alpha(alpha)
+    im.set_clip_path(clip if clip is not None else ax.patch)
+    im.set_clip_box(ax.bbox)                     # never paint outside the panel
+    ax.add_artist(im)
+    return im
+
+
+def bg_gradient(ax, color=None, strength=None, direction=None, to=None):
+    """Soft gradient behind the data of one panel: *color* (default: the house cool grey-blue) at the bottom
+    fading to white at the top. A colour name from PALETTE is lightened automatically. Returns the image."""
+    color = color or _BACKGROUND["color"]
+    k = _BACKGROUND["strength"] if strength is None else strength
+    c = mcolors.to_rgba(color)
+    if sum(c[:3]) / 3 < 0.8:                    # a full-strength hue -> its very light tint
+        c = _mix(c, 0.86)
+    c0 = _mix(c, 1 - k, to or _BACKGROUND["to"])
+    im = gradient_image(ax, (0, 1, 0, 1), [c0, to or _BACKGROUND["to"]], direction=direction or _BACKGROUND["direction"],
+                        coords="axes", zorder=-100)
+    ax._ns_bg = im
+    return im
+
+
+def no_background(ax):
+    """Keep this panel plain when backgrounds are added at save time."""
+    ax._ns_nobg = True
+    if getattr(ax, "_ns_bg", None) is not None and ax._ns_bg is not True:
+        ax._ns_bg.remove()
+    ax._ns_bg = None
+
+
+def set_background(mode="gradient", color=None, strength=None, direction=None, to=None):
+    """Panel backgrounds for figures saved afterwards: mode 'gradient' or 'none'; color = tint at the start of the
+    gradient (default '#DCE6F2'), strength 0-1, direction 'up' | 'down' | 'right' | 'left'."""
+    _BACKGROUND["mode"] = mode
+    for k, v in (("color", color), ("strength", strength), ("direction", direction), ("to", to)):
+        if v is not None:
+            _BACKGROUND[k] = v
+
+
+def _wants_background(ax):
+    import matplotlib.collections as mcoll
+    if getattr(ax, "_ns_nobg", False) or getattr(ax, "_ns_bg", None) is not None:
+        return False
+    if not ax.get_visible() or not ax.axison or ax.name != "rectilinear" or hasattr(ax, "_colorbar"):
+        return False
+    if ax.images:
+        return False
+    for c in ax.collections:
+        if isinstance(c, mcoll.QuadMesh):
+            return False
+        if isinstance(c, mcoll.PolyCollection) and c.get_array() is not None and len(c.get_offsets()) > 1:
+            return False                         # hexbin
+    fc = mcolors.to_rgba(ax.get_facecolor())
+    if fc[3] > 0 and sum(fc[:3]) < 2.97:        # panel already has its own colour
+        return False
+    bb = ax.get_position()
+    W, H = ax.figure.get_size_inches()
+    return bb.width * W * MM_PER_IN >= 10 and bb.height * H * MM_PER_IN >= 8
+
+
+def apply_backgrounds(fig):
+    """Add the current panel background to every eligible axes of *fig* (idempotent). Called by the savers."""
+    if _BACKGROUND["mode"] != "gradient":
+        return fig
+    for ax in fig.axes:
+        if _wants_background(ax):
+            bg_gradient(ax)
+    return fig
 
 
 def active_look():
@@ -313,7 +440,7 @@ def active_look():
 def _init_rcparams():
     mpl.rcParams.update(_BASE_RCPARAMS)
     apply_preset("np_final")
-    set_look("open")
+    set_look("boxed")
 
 
 _init_rcparams()
@@ -403,6 +530,7 @@ def save(fig, name, outdir=OUTDIR, transparent=False):
 
 
 def save_fig(fig, name, outdir=OUTDIR, transparent=False, dpi=SAVE_DPI):
+    apply_backgrounds(fig)
     outdir = Path(outdir)
     outdir.mkdir(parents=True, exist_ok=True)
     fig.savefig(outdir / (name + ".png"), dpi=dpi, bbox_inches="tight", transparent=transparent)
@@ -495,28 +623,43 @@ def pin_top_letters(fig, top_mm=1.0, band_mm=3.0):
             t.set_y(1 - top_mm / H)
 
 
-def audit_text(fig, min_pt=5.0, max_pt=8.0, show=True):
+def fs():
+    """The single font size of the active preset (7 pt in np_final, 9 pt in preview)."""
+    return mpl.rcParams["font.size"]
+
+
+def audit_text(fig, min_pt=5.0, max_pt=8.0, show=True, uniform=False):
     """List every text artist of *fig* (labels, ticks, legends, annotations) whose font size is outside
-    [min_pt, max_pt] (Nature: >= 5 pt, panel letters 8 pt). Returns [(size, text), ...]."""
+    [min_pt, max_pt] (Nature: >= 5 pt, panel letters 8 pt). uniform=True also lists any text that is not at the
+    house size fs() (bold one-letter panel labels excepted) and any text not set in the house face.
+    Returns [(size, text), ...]."""
     fig.canvas.draw()
     bad = []
+    base = fs()
+    face = FONT_FAMILY[0]
     for t in fig.findobj(mpl.text.Text):
         s = t.get_text().strip()
         if not s or not t.get_visible():
             continue
-        fs = float(t.get_fontsize())
-        if fs < min_pt - 1e-6 or fs > max_pt + 1e-6:
-            bad.append((fs, s))
+        size = float(t.get_fontsize())
+        letter = len(s) == 1 and s.isalpha() and t.get_fontweight() in ("bold", 700)
+        if size < min_pt - 1e-6 or size > max_pt + 1e-6:
+            bad.append((size, s))
+        elif uniform and not letter and abs(size - base) > 1e-6:
+            bad.append((size, s))
+        elif uniform and t.get_fontname() != face and not s.startswith("$"):
+            bad.append((size, f"[{t.get_fontname()}] {s}"))
     if show:
-        print(f"[audit_text] {len(bad)} text items outside {min_pt}-{max_pt} pt")
-        for fs, s in sorted(bad):
-            print(f"   {fs:4.1f} pt  {s[:70]!r}")
+        print(f"[audit_text] {len(bad)} text items to check")
+        for size, s in sorted(bad):
+            print(f"   {size:4.1f} pt  {s[:70]!r}")
     return bad
 
 
 def save_fig_exact(fig, name, outdir=OUTDIR, dpi=SAVE_DPI, warn_mm=0.3):
     """Save PNG + PDF at the exact canvas size (no tight bbox), so a 183 mm layout is 183 mm wide.
     Warns when the tight bounding box of the drawn content sticks out of the canvas by more than *warn_mm*."""
+    apply_backgrounds(fig)
     outdir = Path(outdir)
     outdir.mkdir(parents=True, exist_ok=True)
     fig.canvas.draw()

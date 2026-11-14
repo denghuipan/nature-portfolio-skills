@@ -27,13 +27,14 @@ events = {38: "Event 1", 150: "Start", 210: "End", 300: "Event 2"}
 c = PALETTE["teal"]
 fig, ax = plt.subplots(figsize=figsize_2col(52))
 fig.subplots_adjust(left=0.07, right=0.98, bottom=0.2, top=0.82)
-ax.axvspan(*window, color=PALETTE["sand"], alpha=0.45, lw=0, zorder=0)
-ax.text(np.mean(window), 78, "Intervention window", ha="center", va="top", fontsize=6, color="0.3")
+regime(ax, *window, color=PALETTE["plum"], fade="up", alpha=(0.0, 0.22), zorder=0)
+ax.text(np.mean(window), 78, "Intervention window", ha="center", va="top", color="0.3")
 ax.plot(d, y, color=lighten(c, 0.55), lw=0.5, zorder=2, label="Daily value")
 ax.plot(d[7:-7], roll[7:-7], color=c, lw=1.3, zorder=3, label="14-day mean")
+gradient_fill(ax, d[7:-7], roll[7:-7], c, alpha=0.35, ymin=20, zorder=1)
 for x, lab in events.items():
     ax.annotate(lab, (x, 1.0), xycoords=("data", "axes fraction"), xytext=(0, 6), textcoords="offset points",
-                ha="center", va="bottom", fontsize=6, color="0.25",
+                ha="center", va="bottom", color="0.25",
                 arrowprops=dict(arrowstyle="-", lw=0.5, color="0.4", shrinkA=0, shrinkB=0))
 ax.set_xlim(0, 364); ax.set_ylim(20, 80)
 months = np.cumsum([0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30])

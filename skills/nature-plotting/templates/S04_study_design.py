@@ -35,10 +35,10 @@ arrow(ax, b0.r, (60.4, 46))
 arm_boxes = []
 for k, ((g, sub, n), c) in enumerate(zip(arms, ("blue", "orange"))):
     y = 53 - k * 15
-    bb = pbox(ax, 74, y, 24, 10, g, sub=f"{sub}, n = {n:,}", color=c)
-    route(ax, [(65.6, 46), (69, 46), (69, y + 5), (74, y + 5)], radius=1.2)
+    bb = pbox(ax, 72, y, 31, 10, g, sub=f"{sub}, n = {n:,}", color=c)
+    route(ax, [(65.6, 46), (68.5, 46), (68.5, y + 5), (72, y + 5)], radius=1.2)
     arm_boxes.append(bb)
-x0, x1 = 110, 172
+x0, x1 = 113, 172
 tx = lambda w: x0 + (x1 - x0) * w / 52
 timeline(ax, x0, x1, 46, [tx(v) for v in visits], [str(v) for v in visits], above=True)
 label(ax, x1 + 2.5, 46, "Week", ha="left", size=0.95)
@@ -51,8 +51,8 @@ for i, (m, wk) in enumerate(measures.items()):
     for w in visits:
         ax.plot(tx(w), y, "o", ms=3.2, mfc=PASTEL["purple"][1] if w in wk else "white",
                 mec=PASTEL["purple"][1] if w in wk else "0.75", mew=0.6)
-route(ax, [(98, 58), (103, 58), (103, 46.6), (108, 46.6)], radius=1.0, arrow_end=False)
-route(ax, [(98, 43), (103, 43), (103, 46.6), (108, 46.6)], radius=1.0)
-label(ax, 2, 62, "a", ha="left", va="top", size=1.33, fontweight="bold")
-label(ax, 107, 62, "b", ha="left", va="top", size=1.33, fontweight="bold")
+route(ax, [(103, 58), (106.5, 58), (106.5, 46.6), (110.5, 46.6)], radius=1.0, arrow_end=False)
+route(ax, [(103, 43), (106.5, 43), (106.5, 46.6), (110.5, 46.6)], radius=1.0)
+letter(ax, 2, 62, "a")
+letter(ax, 108, 62, "b")
 export(fig, "S04_study_design")

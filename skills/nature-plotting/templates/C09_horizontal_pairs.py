@@ -23,10 +23,10 @@ fig, ax = plt.subplots(figsize=figsize_mm(89, 58))
 fig.subplots_adjust(left=0.36, right=0.97, bottom=0.17, top=0.88)
 y = np.arange(len(cats))[::-1] * 1.0
 h = 0.36
-ax.barh(y + h / 2, ref, height=h, color=light, lw=0)
-ax.barh(y - h / 2, new, height=h, color=dark, lw=0)
+gbarh(ax, y + h / 2, ref, light, height=h)
+gbarh(ax, y - h / 2, new, dark, height=h, light=0.55)
 for yi, v in zip(y - h / 2, new):
-    ax.text(v + 0.01, yi, f"{v:.0%}", va="center", fontsize=6)
+    ax.text(v + 0.01, yi, f"{v:.0%}", va="center")
 ax.set_yticks(y, cats); ax.tick_params(axis="y", length=0)
 ax.set_xlim(0, 0.95); ax.set_xticks([0.1, 0.3, 0.5, 0.7, 0.9]); percent(ax, "x")
 ax.set_xlabel("Precision of prediction")

@@ -40,15 +40,13 @@ col_order = d["leaves"]
 im = hm.imshow(Z[row_order][:, col_order], aspect="auto", cmap=NS_DIV_BR, vmin=-2.5, vmax=2.5, interpolation="nearest")
 hm.set_xticks(range(n_cols), [samples[i] for i in col_order], rotation=90)
 hm.set_yticks([]); hm.tick_params(axis="x", length=0)
-for s in hm.spines.values():
-    s.set_visible(False)
 strip.imshow(row_group[row_order][:, None], aspect="auto", cmap=mcolors.ListedColormap(gcols),
              interpolation="nearest")
 strip.axis("off")
-strip.text(-0.6, 0.5, "Features", transform=strip.transAxes, rotation=90, ha="right", va="center", fontsize=7)
+strip.text(-0.6, 0.5, "Features", transform=strip.transAxes, rotation=90, ha="right", va="center")
 cax = fig.add_axes([0.85, 0.83, 0.12, 0.022])
 cb = fig.colorbar(im, cax=cax, orientation="horizontal", ticks=[-2, 0, 2]); style_cbar(cb)
-cax.set_title("z-score", fontsize=6, pad=2)
+cax.set_title("z-score", pad=2)
 key = fig.add_axes([0.84, 0.45, 0.15, 0.3]); key.axis("off")
-square_legend(key, gnames, gcols, loc="upper left", title="Row group", title_fontsize=6)
+square_legend(key, gnames, gcols, loc="upper left", title="Row group")
 export(fig, "M02_cluster_heatmap")

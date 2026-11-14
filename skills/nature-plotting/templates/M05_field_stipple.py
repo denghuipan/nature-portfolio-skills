@@ -32,12 +32,12 @@ ax.contour(lon, lat, field, levels=[-1, -0.5, 0.5, 1], colors="0.35", linewidths
 ax.scatter(LON[agree][::3], LAT[agree][::3], s=0.35, color="0.05", lw=0)
 x0, x1, y0, y1 = region
 ax.add_patch(plt.Rectangle((x0, y0), x1 - x0, y1 - y0, fill=False, ec="0.05", lw=0.8, ls=(0, (3, 2))))
-ax.text(x1 + 3, y1, "Region R", fontsize=6, va="top")
+ax.text(x1 + 3, y1, "Region R", va="top")
 ax.set_xlim(-180, 180); ax.set_ylim(-60, 75); ax.set_aspect("equal")
 ax.set_xticks(range(-180, 181, 60), [f"{abs(v)}°{'W' if v < 0 else 'E' if v > 0 else ''}" for v in range(-180, 181, 60)])
-ax.set_yticks([-60, -30, 0, 30, 60], ["60° S", "30° S", "0°", "30° N", "60° N"])
+ax.set_yticks([-30, 0, 30, 60], ["30° S", "0°", "30° N", "60° N"])
 for s in ax.spines.values():
     s.set_visible(True); s.set_linewidth(0.5)
 cb = cbar_below(ax, pm, "Change (unit)", size="4%", pad=0.25, extend="both", ticks=[-1.5, -1, -0.5, 0, 0.5, 1, 1.5])
-ax.text(1.0, -0.13, "Dots: ≥ 80% of members agree", transform=ax.transAxes, ha="right", fontsize=6, color="0.35")
+ax.text(1.0, -0.13, "Dots: ≥ 80% of members agree", transform=ax.transAxes, ha="right", color="0.35")
 export(fig, "M05_field_stipple")

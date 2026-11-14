@@ -20,8 +20,10 @@ python scripts/audit_layout.py fig.pdf        # 检查 PDF：尺寸、字体、�
 模块：`assets/nature_style.py`（样式、坐标外观、尺寸、导出）、`assets/nature_charts.py`（图表构件）、
 `assets/nature_cmaps.py`（色图、配色、色条）、`assets/nature_schematic.py`（示意图元件）。
 
-规范：单栏 89 mm，双栏 183 mm，高度 ≤ 170 mm；Arial 5–7 pt；默认开放 L 形坐标轴、外向短刻度、无次刻度；
-`set_look("grid" | "framed" | "classic")` 可切换外观（见 K04）；避免彩虹色图和单纯红绿对比。
+规范：单栏 89 mm，双栏 183 mm，高度 ≤ 170 mm。默认样式：全部文字 Arial、统一 7 pt（仅面板字母 8 pt 粗体）；
+每个数据面板全框线、短刻度朝内（下、左）、无次刻度；保存时自动给面板加柔和的竖向渐变背景；柱状图、直方图、
+曲线下面积、时间窗、堆叠面积、示意图方框等默认渐变填充。`set_look("grid" | "framed" | "open" | "classic")`
+可切换外观（见 K04），`set_background("none")` 关闭背景渐变。避免彩虹色图和单纯红绿对比。
 详见 `references/nature-rules.md`。
 
 
@@ -159,7 +161,7 @@ python scripts/audit_layout.py fig.pdf        # 检查 PDF：尺寸、字体、�
 |---|---|
 | ![K01_colormaps](gallery/K01_colormaps.png) | ![K02_colorbar_styles](gallery/K02_colorbar_styles.png) |
 
-| **K03_palettes_cvd**<br>分类配色在正常视觉与三种色觉缺陷下的样子 | **K04_axis_looks**<br>同一面板的四种坐标外观：open（默认）、grid、framed、classic |
+| **K03_palettes_cvd**<br>分类配色在正常视觉与三种色觉缺陷下的样子 | **K04_axis_looks**<br>同一面板的五种坐标外观：boxed（默认，全框线 + 渐变背景）、grid、framed、open、classic |
 |---|---|
 | ![K03_palettes_cvd](gallery/K03_palettes_cvd.png) | ![K04_axis_looks](gallery/K04_axis_looks.png) |
 

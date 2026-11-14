@@ -43,7 +43,7 @@ for yy in (37, 28.5, 12):
 ma = pbox(ax, 74, 22, 14, 13, modules[1][0], sub=modules[1][1])
 mb = pbox(ax, 94, 22, 14, 13, modules[2][0], sub=modules[2][1])
 core = pbox(ax, 114, 14, 22, 29, modules[3][0], sub=modules[3][1])
-dec = pbox(ax, 147, 9, 18, 15, modules[4][0], sub=modules[4][1])
+dec = pbox(ax, 144, 9, 24, 15, modules[4][0], sub=modules[4][1])
 conf = pbox(ax, 160, 46, 18, 11, modules[5][0], sub=modules[5][1])
 for x in (69, 91, 111):
     plus_node(ax, x, 28.5, 1.0)
@@ -55,13 +55,13 @@ route(ax, [(63, 37), (101, 37), (101, 35)], color=c_a, radius=1.2)
 route(ax, [(63, 12), (120, 12), (120, 14)], color=c_b, radius=1.2)
 route(ax, [(136, 36), (156, 36), (156, 24)], color=c_b, radius=1.5)
 route(ax, [(136, 36), (169, 36), (169, 46)], color=c_b, radius=1.5)
-route(ax, [(136, 20), (147, 20)], color=c_b)
-route(ax, [(165, 16.5), (171, 16.5), (171, 46)], color=c_c, radius=1.5)
+route(ax, [(136, 20), (144, 20)], color=c_b)
+route(ax, [(168, 16.5), (173, 16.5), (173, 46)], color=c_c, radius=1.5)
 route(ax, [(130, 14), (130, 4), (69, 4), (69, 27.5)], color=c_b, dashed=True, radius=1.5,
       label_text="Recycling", label_side="below", label_color=c_b)
 route(ax, [(151, 9), (151, 5.5), (159, 5.5), (159, 9)], color=c_c, dashed=True, radius=1.2,
       label_text="Iterations", label_side="below", label_color=c_c)
 for k, (nm, c) in enumerate((("Stream 1", c_a), ("Stream 2", c_b), ("Stream 3", c_c))):
-    ax.plot([140 + k * 15, 145 + k * 15], [59.5, 59.5], color=c, lw=1.0)
-    label(ax, 146 + k * 15, 59.5, nm, ha="left", size=0.9)
+    ax.plot([118 + k * 21, 123 + k * 21], [59.5, 59.5], color=c, lw=1.0)
+    label(ax, 124.5 + k * 21, 59.5, nm, ha="left")
 export(fig, "S02_architecture")

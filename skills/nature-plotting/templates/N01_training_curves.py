@@ -35,10 +35,11 @@ for s in acc:
     b.plot(steps, s, color=PALETTE["ochre"], lw=0.35, alpha=0.6)
 m = acc.mean(0); k = int(np.argmax(m))
 b.plot(steps, m, color=PALETTE["ochre"], lw=1.2)
+gradient_fill(b, steps, m, PALETTE["ochre"], alpha=0.3, ymin=0.5)
 b.plot(steps[k], m[k], "o", color="0.1", ms=3)
 b.plot([steps[k]] * 2, [0.5, m[k]], color="0.3", lw=0.5, ls=(0, (3, 2)))
 b.annotate(f"Best: {m[k]:.3f}\nat step {int(steps[k]):,}", (steps[k], 0.52), xytext=(-3, 0),
-           textcoords="offset points", ha="right", va="bottom", fontsize=6)
+           textcoords="offset points", ha="right", va="bottom")
 for ax in (a, b):
     ax.set_xscale("log"); ax.set_xlim(100, 1e5)
     ax.set_xticks([100, 1000, 10000, 100000], ["100", "1,000", "10,000", "100,000"])
@@ -46,6 +47,6 @@ for ax in (a, b):
     ax.set_xlabel("Training step")
 a.set_ylabel("Loss"); a.set_ylim(0.4, 2.6); a.legend(loc="upper right")
 b.set_ylabel("Validation accuracy"); b.set_ylim(0.5, 0.95)
-b.text(0.02, 0.98, f"{seeds} seeds (thin); mean (bold)", transform=b.transAxes, va="top", fontsize=6, color="0.4")
+b.text(0.02, 0.98, f"{seeds} seeds (thin); mean (bold)", transform=b.transAxes, va="top", color="0.4")
 panel_label(a, "a", dx=-0.2, dy=1.08); panel_label(b, "b", dx=-0.2, dy=1.08)
 export(fig, "N01_training_curves")

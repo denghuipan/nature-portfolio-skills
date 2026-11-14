@@ -29,10 +29,8 @@ for r, (nm, pal) in enumerate(palettes.items()):
         ax.imshow(img[None, :, :], aspect="auto", extent=(0, len(pal), 0, 1))
         for i in range(1, len(pal)):
             ax.axvline(i, color="white", lw=1.2)
-        ax.set_xlim(0, 8); ax.set_xticks([]); ax.set_yticks([])
-        for s in ax.spines.values():
-            s.set_visible(False)
+        ax.set_xlim(0, len(pal)); ax.set_xticks([]); ax.set_yticks([])
         if r == 0:
-            ax.set_title(title, fontsize=6.5, pad=3)
-    axs[r, 0].text(-0.03, 0.5, nm, transform=axs[r, 0].transAxes, ha="right", va="center", fontsize=6)
+            ax.set_title(title, pad=3)
+    axs[r, 0].text(-0.03, 0.5, nm, transform=axs[r, 0].transAxes, ha="right", va="center")
 export(fig, "K03_palettes_cvd")

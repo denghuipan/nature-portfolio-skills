@@ -47,12 +47,10 @@ for r in range(2):
         ax = axs[r, c]
         ax.imshow(img, cmap=cm, vmin=0, vmax=1, interpolation="bilinear")
         ax.set_xticks([]); ax.set_yticks([])
-        for s in ax.spines.values():
-            s.set_visible(False)
     axs[r, 2].add_patch(plt.Rectangle((x0, y0), x1 - x0, y1 - y0, fill=False, ec="white", lw=0.6, ls=(0, (2, 1.5))))
-    axs[r, 0].set_ylabel(conds[r], fontsize=7)
+    axs[r, 0].set_ylabel(conds[r])
     scale_bar(axs[r, 2], 5 / px_um, "5 µm", loc="lower right", color="w")
     scale_bar(axs[r, 3], 1 / px_um, "1 µm", loc="lower right", color="w")
 for c, (t, col) in enumerate([("Channel 1", "#2E8F47"), ("Channel 2", "#A83AA8"), ("Merge", "0.1"), ("Zoom", "0.1")]):
-    axs[0, c].set_title(t, fontsize=7, color=col, pad=3)
+    axs[0, c].set_title(t, color=col, pad=3)
 export(fig, "M06_image_grid")

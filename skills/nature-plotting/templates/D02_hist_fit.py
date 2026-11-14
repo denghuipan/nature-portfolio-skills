@@ -22,7 +22,8 @@ v2 = np.r_[rng.normal(-2.0, 0.45, 6000), rng.normal(0.4, 0.8, 1800)]
 fig, (a, b) = plt.subplots(1, 2, figsize=figsize_mm(120, 50))
 fig.subplots_adjust(left=0.09, right=0.98, bottom=0.22, top=0.93, wspace=0.38)
 bins = np.linspace(94, 102, 41)
-a.hist(v1, bins=bins, color=PALETTE["sky"], lw=0)
+_, _, pa = a.hist(v1, bins=bins, color=PALETTE["blue"], lw=0)
+gradient_patches(a, pa, PALETTE["blue"], light=0.8)
 mu, sd = norm.fit(v1)
 xx = np.linspace(94, 102, 300)
 a.plot(xx, norm.pdf(xx, mu, sd) * v1.size * np.diff(bins)[0], color=PALETTE["navy"], lw=1.0)
@@ -30,7 +31,8 @@ stats_text(a, [f"$\\mu$ = {mu:.2f}%", f"$\\sigma$ = {sd:.2f}%", f"n = {v1.size:,
 a.set_xlabel("Score (%)"); a.set_ylabel("Count"); a.set_xlim(94, 102)
 
 bins = np.linspace(-4, 4, 61)
-cnt, e, _ = b.hist(v2, bins=bins, color=lighten(PALETTE["plum"], 0.55), lw=0)
+cnt, e, pb = b.hist(v2, bins=bins, color=lighten(PALETTE["plum"], 0.45), lw=0)
+gradient_patches(b, pb, lighten(PALETTE["plum"], 0.2), light=0.75)
 w = np.diff(e)[0]
 c1 = norm.pdf(xx := np.linspace(-4, 4, 400), -2.0, 0.45) * 6000 * w
 c2 = norm.pdf(xx, 0.4, 0.8) * 1800 * w

@@ -34,8 +34,8 @@ for (nm, r), c, mk in zip(reps.items(), cols, marks):
 ax.set_xscale("log"); ax.set_xlim(5e-4, 2e2); ax.set_ylim(-5, 110)
 ax.set_xticks([1e-3, 1e-2, 1e-1, 1, 10, 100])
 ax.set_xlabel("Concentration (µM)"); ax.set_ylabel("Response (% of maximum)")
-ax.text(0.03, 0.97, "EC$_{50}$ (µM)", transform=ax.transAxes, fontsize=6, va="top", color="0.3")
+ax.text(0.03, 0.97, "EC$_{50}$ (µM)", transform=ax.transAxes, va="top", color="0.3")
 for i, (nm, ec, c) in enumerate(rows):
-    ax.text(0.03, 0.89 - 0.075 * i, f"{nm}  {ec:.2g}", transform=ax.transAxes, fontsize=6, va="top", color=c)
-ax.text(0.97, 0.04, "mean ± s.e.m., n = 3", transform=ax.transAxes, ha="right", fontsize=6, color="0.4")
+    ax.text(0.03, 0.89 - 0.075 * i, f"{nm}  {ec:.2g}", transform=ax.transAxes, va="top", color=c)
+ax.text(0.97, 0.04, "mean ± s.e.m., n = 3", transform=ax.transAxes, ha="right", color="0.4")
 export(fig, "B02_dose_response")

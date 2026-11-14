@@ -33,14 +33,13 @@ node_link(ax, pos, size, edges, np.log10(w), {k: gcol[role[k]] for k in pos}, ed
           edge_alpha=0.75)
 for k, (x, y) in pos.items():
     off = 0.2 if role[k] != 1 else 0.3
-    ax.text(x, y + off if role[k] == 0 else y - off, k, ha="center", va="bottom" if role[k] == 0 else "top",
-            fontsize=6, zorder=5, bbox=dict(boxstyle="square,pad=0.08", fc="white", ec="none", alpha=0.85))
+    ax.text(x, y + off if role[k] == 0 else y - off, k, ha="center", va="bottom" if role[k] == 0 else "top", zorder=5, bbox=dict(boxstyle="square,pad=0.08", fc="white", ec="none", alpha=0.85))
 ax.set_xlim(-1.9, 1.9); ax.set_ylim(-1.2, 1.85)
 for y0, y1, nm in ((1.25, 1.65, "Input"), (0.1, 0.65, "Core"), (-1.05, -0.55, "Output")):
     bracket_label(ax, y0, y1, nm, x=1.0)
 key = fig.add_axes([0.01, 0.62, 0.15, 0.3]); key.axis("off")
 for i, (v, lw) in enumerate(((1e3, 0.3), (1e4, 0.93), (1e5, 1.57), (1e6, 2.2))):
     key.plot([0, 0.3], [0.8 - 0.22 * i] * 2, color="0.3", lw=lw)
-    key.text(0.4, 0.8 - 0.22 * i, f"10$^{int(np.log10(v))}$", va="center", fontsize=6)
-key.text(0, 1.0, "Weight", fontsize=6, va="bottom"); key.set_xlim(0, 1); key.set_ylim(0, 1.1)
+    key.text(0.4, 0.8 - 0.22 * i, f"10$^{int(np.log10(v))}$", va="center")
+key.text(0, 1.0, "Weight", va="bottom"); key.set_xlim(0, 1); key.set_ylim(0, 1.1)
 export(fig, "G02_node_link")

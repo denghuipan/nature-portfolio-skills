@@ -32,15 +32,14 @@ for r, (yy, row) in enumerate(zip(y, vals)):
         ax.barh(yy, v, left=left, height=0.52, color=c, lw=0.5 if hatch else 0,
                 edgecolor="0.35" if hatch else "none", hatch=hatch)
         left += v
-    ax.text(left + 0.03, yy, f"{left:.2f}", va="center", fontsize=6)
+    ax.text(left + 0.03, yy, f"{left:.2f}", va="center")
 from matplotlib.patches import Rectangle as _R
 hs = [_R((0, 0), 1, 1, color=c, lw=0) for c in cols[:4]] + [_R((0, 0), 1, 1, fc="white", ec="0.35", hatch="////", lw=0.5)]
 ax.legend(hs, parts, loc="lower left", bbox_to_anchor=(-0.02, 1.0), ncols=5, handlelength=0.9, handleheight=0.9,
           columnspacing=0.7, handletextpad=0.3)
 ax.errorbar(measured, y - 0.42, xerr=measured_e, fmt="o", ms=2.6, color="k", elinewidth=0.6, zorder=5)
-ax.text(measured[-1] + 0.06, y[-1] - 0.42, "Measured", va="center", fontsize=6)
+ax.text(measured[-1] + 0.06, y[-1] - 0.42, "Measured", va="center")
 ax.set_yticks(y, configs); ax.tick_params(axis="y", length=0)
-despine(ax, left=True)
 ax.set_xlim(0, 1.45); ax.set_ylim(-0.75, 2.75)
 ax.set_xlabel("Error per step (%)")
 export(fig, "C04_error_budget")

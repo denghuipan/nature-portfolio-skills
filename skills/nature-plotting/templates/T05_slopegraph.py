@@ -28,12 +28,9 @@ for i, (b, a) in enumerate(zip(before, after)):
     z = 3 if i in highlight else 1
     ax.plot([0, 1], [b, a], "-o", color=c, lw=1.0 if i in highlight else 0.6, ms=2.5, zorder=z)
     if i in highlight:
-        ax.text(1.06, a, f"{items[i]}  {a:.0f}", va="center", ha="left", fontsize=6, color=c)
-        ax.text(-0.06, b, f"{b:.0f}", va="center", ha="right", fontsize=6, color=c)
+        ax.text(1.06, a, f"{items[i]}  {a:.0f}", va="center", ha="left", color=c)
+        ax.text(-0.06, b, f"{b:.0f}", va="center", ha="right", color=c)
 ax.set_xlim(-0.35, 1.6); ax.set_ylim(min(before.min(), after.min()) - 4, max(before.max(), after.max()) + 4)
 ax.set_xticks([0, 1], ["Time 1", "Time 2"])
-despine(ax, left=True); ax.set_yticks([])
-ax.spines["bottom"].set_bounds(0, 1)
-ax.text(0.5, 1.0, "Value (unit), highlighted items labelled", transform=ax.transAxes, ha="center", va="bottom",
-        fontsize=6, color="0.35")
+ax.set_ylabel("Value (unit)")
 export(fig, "T05_slopegraph")

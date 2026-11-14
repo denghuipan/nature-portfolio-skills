@@ -29,8 +29,6 @@ fig.subplots_adjust(left=0.04, right=0.94, top=0.95, bottom=0.12, wspace=0.42, h
 a, b, c, d, e, f = axs.ravel()
 for ax in (a, b, d, e, f):
     ax.set_xticks([]); ax.set_yticks([]); ax.set_aspect("equal")
-    for s in ax.spines.values():
-        s.set_visible(False)
 im = a.imshow(Z, cmap=NS_SEAFLOOR, origin="lower"); cbar_side(a, im, "Intensity (norm.)", ticks=[0, 0.5, 1])
 im = b.imshow(Z, cmap=NS_PURPLES, origin="lower")
 cbar_inset(b, im, "Density (a.u.)", loc="upper right", width="38%", height="4%", ticks=[0, 0.5, 1])

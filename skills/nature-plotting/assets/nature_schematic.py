@@ -25,7 +25,8 @@ from matplotlib.patches import (FancyBboxPatch, FancyArrowPatch, Rectangle, Poly
                                 PathPatch, ConnectionPatch)
 from matplotlib.path import Path as MPath
 
-from nature_style import PALETTE
+import nature_style as _ns
+from nature_style import PALETTE, gradient_image, _mix
 from nature_cmaps import lighten, darken, NS_EMBER
 
 __all__ = [
@@ -35,7 +36,7 @@ __all__ = [
     "conv_blocks", "matrix_icon", "mini_plot", "image_icon", "concept_axes", "brace", "zoom_connector",
     "LINE", "FILL", "EDGE", "PASTEL", "pastel", "group_frame", "pbox", "cylinder", "circle_node", "plus_node",
     "route", "chevrons", "cycle_diagram", "icon_graph", "icon_stack", "icon_bars", "icon_person", "icon_cells",
-    "timeline",
+    "timeline", "letter", "GRADIENT_FILLS",
 ]
 
 LINE = "0.2"          # default stroke for diagram lines
@@ -44,8 +45,27 @@ FILL = "#EEEEEE"      # neutral component fill (Fig. 3a style)
 BEAM = "#7CCB7C"      # default beam colour; use wavelength colours when meaningful
 
 
+GRADIENT_FILLS = True   # pastel boxes, frames, nodes, chevrons and cylinders get soft vertical gradients
+
+
 def _fs(scale=1.0):
-    return mpl.rcParams["legend.fontsize"] * scale
+    """House font size. *scale* is accepted for old calls but ignored: every diagram label uses one size."""
+    return mpl.rcParams["font.size"]
+
+
+def _grad_fill(ax, patch, fc, top=0.55, bottom=0.0, direction="up", zorder=None):
+    """Gradient inside *patch*: fc slightly deepened at the bottom -> fc lightened by *top* at the top."""
+    if not GRADIENT_FILLS:
+        return None
+    ext = patch.get_path().get_extents(patch.get_patch_transform())
+    c_bot = _mix(fc, bottom, "#000000") if bottom > 0 else mcolors.to_rgba(fc)
+    return gradient_image(ax, (ext.x0, ext.x1, ext.y0, ext.y1), [c_bot, _mix(fc, top)], direction=direction,
+                          clip=patch, zorder=(patch.get_zorder() + 0.01) if zorder is None else zorder)
+
+
+def letter(ax, x, y, text, **kw):
+    """Bold panel letter on a mm canvas (same size as nature_style.panel_label)."""
+    return ax.text(x, y, text, ha="left", va="top", fontsize=_ns._PANEL_LABEL_SIZE, fontweight="bold", **kw)
 
 
 def _lw(scale=1.0):
@@ -91,16 +111,21 @@ class Box:
 
 
 def box(ax, x, y, w, h, text=None, sub=None, fc=FILL, ec=EDGE, lw=None, r=0.8, fontsize=None, color="k",
-        sub_color="0.4", bold=False, zorder=2, ls="-"):
-    """Rounded component box with a title line and an optional grey second line. Returns a Box (anchors l/r/t/b/c)."""
-    p = FancyBboxPatch((x, y), w, h, boxstyle=f"round,pad=0,rounding_size={r}", fc=fc, ec=ec,
-                       lw=lw if lw is not None else _lw(0.8), zorder=zorder, ls=ls)
+        sub_color="0.4", bold=False, zorder=2, ls="-", grad=True):
+    """Rounded component box with a title line and an optional grey second line; filled boxes get a soft
+    vertical gradient (grad=False for flat). Returns a Box (anchors l/r/t/b/c)."""
+    p = FancyBboxPatch((x, y), w, h, boxstyle=f"round,pad=0,rounding_size={r}", fc=fc, ec="none",
+                       lw=0, zorder=zorder)
     ax.add_patch(p)
+    if grad and fc not in ("none", "white", "#FFFFFF", "w"):
+        _grad_fill(ax, p, fc, top=0.6, bottom=0.03)
+    ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle=f"round,pad=0,rounding_size={r}", fc="none", ec=ec,
+                                lw=lw if lw is not None else _lw(0.8), zorder=zorder + 0.02, ls=ls))
     fs = fontsize or _fs(1.1)
     if text and sub:
         ax.text(x + w / 2, y + h * 0.60, text, ha="center", va="center", fontsize=fs, color=color,
                 fontweight="bold" if bold else "normal", zorder=zorder + 1)
-        ax.text(x + w / 2, y + h * 0.28, sub, ha="center", va="center", fontsize=fs * 0.9, color=sub_color,
+        ax.text(x + w / 2, y + h * 0.28, sub, ha="center", va="center", fontsize=fs, color=sub_color,
                 zorder=zorder + 1)
     elif text:
         ax.text(x + w / 2, y + h / 2, text, ha="center", va="center", fontsize=fs, color=color,
@@ -428,7 +453,11 @@ def mini_plot(ax, x, y, w, h, xdata, ydata, color="#3A6EA5", fill=True, ls="-", 
     X = x + (xd - xd.min()) / (xd.max() - xd.min()) * w
     Y = y + (yd - lo) / (hi - lo) * h
     if fill:
-        ax.fill_between(X, y, Y, color=color, alpha=0.18, lw=0, zorder=zorder)
+        clip = Polygon(np.column_stack([np.r_[X, X[::-1]], np.r_[Y, np.full_like(Y, y)]]), closed=True, fc="none",
+                       ec="none")
+        ax.add_patch(clip)
+        gradient_image(ax, (X.min(), X.max(), y, Y.max()), [mcolors.to_rgba(color, 0.0), mcolors.to_rgba(color, 0.4)],
+                       clip=clip, zorder=zorder)
     ax.plot(X, Y, color=color, lw=lw or _lw(1.1), ls=ls, zorder=zorder + 0.1)
     if frame:
         ax.add_patch(Rectangle((x, y), w, h, fc="none", ec="k", lw=_lw(0.6), zorder=zorder + 0.2))
@@ -520,8 +549,14 @@ def group_frame(ax, x, y, w, h, title=None, color="blue", r=1.6, lw=None, title_
                 ls="-", zorder=1, title_size=1.05):
     """Rounded frame around a group of boxes (a pipeline, a module), coloured edge, title centred above it."""
     ec = PASTEL[color][1] if color in PASTEL else color
-    ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle=f"round,pad=0,rounding_size={r}", fc=fill, ec=ec,
-                                lw=lw or _lw(1.0), ls=ls, zorder=zorder))
+    fp = FancyBboxPatch((x, y), w, h, boxstyle=f"round,pad=0,rounding_size={r}", fc=fill, ec="none", lw=0,
+                        zorder=zorder)
+    ax.add_patch(fp)
+    if GRADIENT_FILLS:
+        gradient_image(ax, (x, x + w, y, y + h), [_mix(ec, 0.88), mcolors.to_rgba(fill)], direction="up", clip=fp,
+                       zorder=zorder + 0.01)
+    ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle=f"round,pad=0,rounding_size={r}", fc="none", ec=ec,
+                                lw=lw or _lw(1.0), ls=ls, zorder=zorder + 0.02))
     if title:
         ty = y + h + 0.9 if title_side == "top" else y - 0.9
         ax.text(x + w / 2, ty, title, ha="center", va="bottom" if title_side == "top" else "top",
@@ -529,18 +564,25 @@ def group_frame(ax, x, y, w, h, title=None, color="blue", r=1.6, lw=None, title_
     return Box(x, y, w, h)
 
 
-def pbox(ax, x, y, w, h, text=None, color="grey", sub=None, r=0.8, bold=False, fontsize=None, zorder=2, ls="-"):
-    """Pastel module box: box() with fill/edge from PASTEL[color]."""
+def pbox(ax, x, y, w, h, text=None, color="grey", sub=None, r=0.8, bold=False, fontsize=None, zorder=2, ls="-",
+         grad=True):
+    """Pastel module box: box() with fill/edge from PASTEL[color] (gradient fill by default)."""
     fc, ec = PASTEL[color]
+    if grad:                                  # a little more colour at the bottom so the gradient shows
+        fc = _mix(ec, 0.72)
     return box(ax, x, y, w, h, text=text, sub=sub, fc=fc, ec=ec, r=r, bold=bold, fontsize=fontsize, zorder=zorder,
-               ls=ls)
+               ls=ls, grad=grad)
 
 
 def cylinder(ax, x, y, w, h, text=None, fc="#F3F3F3", ec="0.45", lw=None, cap=0.18, fontsize=None, zorder=3):
     """Database / storage icon: a cylinder with elliptical caps. (x, y) = bottom-left of the body."""
     lw = lw or _lw(0.8)
     ch = h * cap
-    ax.add_patch(Rectangle((x, y + ch / 2), w, h - ch, fc=fc, ec="none", zorder=zorder))
+    body = Rectangle((x, y + ch / 2), w, h - ch, fc=fc, ec="none", zorder=zorder)
+    ax.add_patch(body)
+    if GRADIENT_FILLS:
+        gradient_image(ax, (x, x + w, y, y + h), [_mix(fc, 0.06, "#000000"), _mix(fc, 0.7), _mix(fc, 0.12, "#000000")],
+                       direction="right", clip=body, zorder=zorder + 0.01)
     ax.plot([x, x], [y + ch / 2, y + h - ch / 2], color=ec, lw=lw, zorder=zorder + 0.2)
     ax.plot([x + w, x + w], [y + ch / 2, y + h - ch / 2], color=ec, lw=lw, zorder=zorder + 0.2)
     ax.add_patch(Ellipse((x + w / 2, y + ch / 2), w, ch, fc=fc, ec=ec, lw=lw, zorder=zorder - 0.1))
@@ -554,7 +596,10 @@ def cylinder(ax, x, y, w, h, text=None, fc="#F3F3F3", ec="0.45", lw=None, cap=0.
 
 def circle_node(ax, x, y, r=1.6, text=None, fc="white", ec="0.3", lw=None, fontsize=None, zorder=3):
     """Circle node (junction, merge point, state). Returns a Box around it for anchors."""
-    ax.add_patch(Circle((x, y), r, fc=fc, ec=ec, lw=lw or _lw(0.8), zorder=zorder))
+    c = Circle((x, y), r, fc=fc, ec=ec, lw=lw or _lw(0.8), zorder=zorder)
+    ax.add_patch(c)
+    if fc not in ("white", "w", "#FFFFFF", "none"):
+        _grad_fill(ax, c, fc, top=0.6)
     if text:
         ax.text(x, y, text, ha="center", va="center", fontsize=fontsize or _fs(1.0), zorder=zorder + 1)
     return Box(x - r, y - r, 2 * r, 2 * r)
@@ -612,7 +657,11 @@ def chevrons(ax, x, y, w, h, labels, colors=None, tip=2.0, gap=0.6, fontsize=Non
         notch = 0 if i == 0 else tip
         pts = [(x0, y), (x0 + cw, y), (x0 + cw + tip, y + h / 2), (x0 + cw, y + h), (x0, y + h),
                (x0 + notch, y + h / 2)]
-        ax.add_patch(Polygon(pts, closed=True, fc=c, ec="none", zorder=2))
+        pg = Polygon(pts, closed=True, fc=c, ec="none", zorder=2)
+        ax.add_patch(pg)
+        if GRADIENT_FILLS:
+            gradient_image(ax, (x0, x0 + cw + tip, y, y + h), [_mix(c, 0.10, "#000000"), _mix(c, 0.55)],
+                           direction="up", clip=pg, zorder=2.01)
         ax.text(x0 + (cw + notch) / 2 + tip * 0.25, y + h / 2, lab, ha="center", va="center",
                 fontsize=fontsize or _fs(1.0), color=text_color, zorder=3, linespacing=1.1)
         out.append(Box(x0, y, cw + tip, h))
@@ -642,7 +691,9 @@ def cycle_diagram(ax, cx, cy, R, labels, colors=None, node_r=None, arc_color="0.
         arrow(ax, (xs[-3], ys[-3]), (xs[-1], ys[-1]), color=arc_color, lw=_lw(0.9), head=4.5, shrink=0)
     tr = text_r or R + node_r + 2.2
     for i, (p, lab, c) in enumerate(zip(P, labels, colors)):
-        ax.add_patch(Circle(p, node_r, fc=lighten(c, 0.55), ec=c, lw=_lw(1.0), zorder=3))
+        cc = Circle(p, node_r, fc=lighten(c, 0.55), ec=c, lw=_lw(1.0), zorder=3)
+        ax.add_patch(cc)
+        _grad_fill(ax, cc, lighten(c, 0.35), top=0.75)
         if node_text:
             ax.text(*p, node_text[i], ha="center", va="center", fontsize=_fs(1.1), zorder=4)
         a = angs[i]
@@ -688,7 +739,11 @@ def icon_bars(ax, x, y, w, h, values=(0.45, 0.8, 0.6, 1.0), colors=None, baselin
     colors = colors or ["#9DBCDD"] * (n - 1) + ["#3A6EA5"]
     bw = w / (n * 1.4)
     for i, (vi, c) in enumerate(zip(v, colors)):
-        ax.add_patch(Rectangle((x + i * bw * 1.4 + bw * 0.2, y), bw, vi * h, fc=c, ec="none", zorder=3))
+        rb = Rectangle((x + i * bw * 1.4 + bw * 0.2, y), bw, vi * h, fc=c, ec="none", zorder=3)
+        ax.add_patch(rb)
+        if GRADIENT_FILLS:
+            gradient_image(ax, (rb.get_x(), rb.get_x() + bw, y, y + vi * h), [_mix(c, 0.6), mcolors.to_rgba(c)],
+                           clip=rb, zorder=3.01)
     if baseline:
         ax.plot([x, x + w], [y, y], color="0.3", lw=_lw(0.6), zorder=4)
     return Box(x, y, w, h)

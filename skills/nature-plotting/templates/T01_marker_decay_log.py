@@ -40,7 +40,7 @@ ax.plot(n, d3, "+", ms=5.0, color=C[2], mew=0.9, label="Data 3")
 ax.set_yscale("log"); ax.set_ylim(1e-3, 1.2); ax.set_xlim(10, 55)
 ax.set_xlabel("System size, $n$"); ax.set_ylabel("Score, $S$")
 subtitle(ax, "Directly measurable")
-legend_box(ax, loc="lower left", ncols=2, columnspacing=1.2, title="Depth $d$ = 14", title_fontsize=6)
+legend_box(ax, loc="lower left", ncols=2, columnspacing=1.2, title="Depth $d$ = 14")
 # inset sketch: a dashed box holding a small dot lattice (stand-in for an illustration of the setting)
 ins = ax.inset_axes([0.55, 0.70, 0.42, 0.26]); ins.set_xlim(0, 10); ins.set_ylim(0, 4); ins.axis("off")
 dashed_frame(ax, 0.55, 0.70, 0.97, 0.96)
@@ -49,7 +49,7 @@ ins.scatter(0.8 + gi.ravel() * 0.7, 0.8 + gj.ravel() * 1.1, s=14,
             c=[[C[0], C[1], C[2]][(i + j) % 3] for i, j in zip(gi.ravel(), gj.ravel())], alpha=0.85)
 for k, t in enumerate("ABCD"):
     ins.add_patch(plt.Rectangle((5.6 + k * 1.05, 1.2), 0.6, 1.6, color=lighten(C[2], 0.25 * k), lw=0))
-    ins.text(5.9 + k * 1.05, 0.55, t, ha="center", va="center", fontsize=6, color=C[2])
+    ins.text(5.9 + k * 1.05, 0.55, t, ha="center", va="center", color=C[2])
 
 bx.errorbar(m, est_b, yerr=err_b, fmt="x", ms=4.5, color=C[1], mew=0.9, elinewidth=0.7, capsize=2,
             label="Data 2 (±5$\\sigma$)")
@@ -62,9 +62,9 @@ for x, y, (c1, c2) in zip(m, est_b + err_b, cost):
     tail = y * 5                                           # arrow from here down to just above the error bar
     arrow_note(bx, x, tail, y * 1.25, c2 or c1, color=C[0] if c2 else "0.35")
     if c2:                                                 # a second cost estimate stacked above the first
-        bx.text(x, tail * 1.75, c1, ha="center", va="bottom", fontsize=6, color="0.35")
-bx.text(0.03, 0.97, "Cost: method X", transform=bx.transAxes, fontsize=6, color="0.35", va="top")
-bx.text(0.03, 0.91, "Cost: method Y", transform=bx.transAxes, fontsize=6, color=C[0], va="top")
-legend_box(bx, loc="lower left", title="$n$ = 53", title_fontsize=6)
+        bx.text(x, tail * 1.75, c1, ha="center", va="bottom", color="0.35")
+bx.text(0.03, 0.97, "Cost: method X", transform=bx.transAxes, color="0.35", va="top")
+bx.text(0.03, 0.91, "Cost: method Y", transform=bx.transAxes, color=C[0], va="top")
+legend_box(bx, loc="lower left", title="$n$ = 53")
 panel_label(ax, "a", dx=-0.09, dy=1.1); panel_label(bx, "b", dx=-0.06, dy=1.1)
 export(fig, "T01_marker_decay_log")

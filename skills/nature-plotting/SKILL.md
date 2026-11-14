@@ -2,15 +2,16 @@
 name: nature-plotting
 description: >-
   Publication figures in Nature-journal style with matplotlib: house rcParams (np_final preset, 89/183 mm,
-  5-7 pt Arial, open L-shaped axes with short outward ticks by default, switchable looks, 600 dpi PNG +
-  editable PDF), 62 ready templates built from the layouts of recent Nature-family papers (trends and fans,
+  Arial at one font size (7 pt) for all text, every panel in a full frame with short inward ticks, soft
+  gradient panel backgrounds and gradient fills, switchable looks, 600 dpi PNG + editable PDF), 62 ready
+  templates built from the layouts of recent Nature-family papers (trends and fans,
   benchmark bars with significance, mirrored counts, forest tables, distributions, dense scatter with zoom,
   volcano, embeddings, dot matrices, maps with stippling, survival, dose-response, training and scaling
   curves, alluvial flows, networks, colour maps and colour bars, pipeline / architecture / study-design
   diagrams, composite page), house colour maps and palettes, and pre-submission QA. Use for any plot, chart,
   figure, colour bar, schematic or figure layout for a paper. Triggers: 画图, 作图, 出图, 配图, 科研绘图, 色条,
   colorbar, 示意图, 概念图, 流程图, plot, chart, figure, Nature style, publication quality.
-version: 4.0.0
+version: 4.1.0
 author: Denghui Pan (dpan13@ucsc.edu)
 ---
 
@@ -50,17 +51,30 @@ use_arial_math()                  # $x$, $\mu$ in the label face
 `load_nature_style.py` resolves the folder via `NATURE_PLOTTING_DIR`, `~/.nature-portfolio/state.json`, or the
 bundled `assets/`. Never hand-roll rcParams, never use matplotlib / seaborn default styles.
 
-**Axis look** (one per paper; `K04_axis_looks` shows all four):
+**House defaults** (applied on import): Arial for every piece of text at ONE size, `fs()` = 7 pt (labels,
+ticks, legends, titles, annotations, colour bars, diagram labels; only panel letters are 8 pt bold); every
+plotting panel in a full 0.6 pt frame with 2.5 pt inward ticks on the bottom and left axes; a soft vertical
+gradient behind the data of every framed panel (added when the figure is saved). Where Arial is not
+installed (Linux servers) its metric clone Liberation Sans / Arimo is used with identical widths.
+
+**Axis look** (one per paper; `K04_axis_looks` shows all five):
 
 | `set_look(...)` | Axes | Use for |
 |---|---|---|
-| `"open"` (default) | left + bottom spines, 2.5 pt outward ticks, no minor ticks | almost everything |
-| `"grid"` | open + faint horizontal grid | dense bars, long time series |
-| `"framed"` | full frame, outward ticks, faint grid | log-log physics / benchmark plots, panels with inset sketches |
-| `"classic"` | full frame, inward ticks on four sides, minor ticks, older bright palette | matching an existing paper in that style |
+| `"boxed"` (default) | full frame, inward ticks bottom / left, gradient background | everything |
+| `"grid"` | boxed + faint horizontal grid | dense bars, long time series |
+| `"framed"` | full frame, outward ticks, faint grid | log-log physics / benchmark plots, inset sketches |
+| `"open"` | L-shaped axes, outward ticks | a lighter page, if a journal or co-author asks |
+| `"classic"` | full frame, inward ticks on four sides, minor ticks, older bright palette, no gradient | matching an existing paper in that style |
 
-`style_axes(ax, look)` restyles one axes; `despine`, `offset_spines`, `thousands` (1,000 separators),
-`percent`, `subtitle` finish single panels.
+**Gradients**: `set_background("gradient" | "none", color=, strength=, direction=)` for all panels,
+`bg_gradient(ax, color)` to tint one panel, `no_background(ax)` to keep one plain. Data fills:
+`bars(..., gradient=True)` (default), `gbarh`, `gradient_patches` (one ramp across histogram bars),
+`gradient_fill` (area under a curve), `regime` (gradient window), `gradient_band`, `area_stack(gradient=True)`,
+`ridgeline(fill="gradient")`, `gradient_image` (any rectangle, clipped to any patch, log axes included).
+
+`style_axes(ax, look)` restyles one axes; `thousands` (1,000 separators), `percent`, `subtitle`, `despine`,
+`offset_spines` finish single panels. Never pass `fontsize=` in a figure: the single size comes from rcParams.
 
 ## 2. Pick a template
 
@@ -144,10 +158,12 @@ are at most 180 mm wide; `ed_finish(fig)` rescales and clamps line widths.
 
 ## 4. Visual rules
 
-- Arial (fallback Helvetica / Liberation Sans), 5-7 pt at final size, nothing below 5 pt; maths via
-  `use_arial_math()`; bold only for panel letters.
-- Open axes, short outward ticks, no minor ticks, no grid unless the look asks for one; frameless legends
-  with short handles; square keys (`square_legend`) for bars and areas.
+- Arial, one size (7 pt) for all text, nothing below 5 pt, panel letters 8 pt bold; maths via
+  `use_arial_math()`; bold only for panel letters. `export()` reports any text off the house size or face.
+- Every plotting panel framed, short inward ticks, no minor ticks, no grid unless the look asks for one;
+  soft gradient backgrounds; frameless legends with short handles; square keys (`square_legend`) for bars.
+- Gradients support the data, never compete with it: light tint at the base, full colour at the top;
+  heat maps, images and colour bars stay flat.
 - Numbers as printed in Nature: thousands separators (`thousands`, `fmt_int`), true minus signs, `n = 428`
   under categories (`n_ticklabels`), exact P values or stars (`sig_bracket`, `p_to_stars`).
 - Label lines and groups directly (`end_labels`, `direct_label`, `place_labels`) when there are <= 5 of them.
@@ -180,7 +196,9 @@ Details: `references/colour-and-colorbars.md`.
 line weights with the data panels and stay vector. Guide: `references/schematics.md`.
 
 - Blocks and frames: `pbox` (pastel box from `PASTEL`), `box`, `group_frame`, `cylinder` (database),
-  `circle_node`, `plus_node`, `chevrons`, `cycle_diagram`, `timeline`, `section_header`, `divider`.
+  `circle_node`, `plus_node`, `chevrons`, `cycle_diagram`, `timeline`, `section_header`, `divider`, `letter`
+  (panel letter on a canvas). Filled blocks, frames, nodes, chevrons and cylinders get soft gradients
+  (`nature_schematic.GRADIENT_FILLS = False` for flat fills); all labels use the single house size.
 - Connectors: `arrow`, `elbow`, `route` (rounded, dashed, labelled loops), `brace`, `zoom_connector`.
 - Icons: `icon_graph`, `icon_stack`, `icon_bars`, `icon_person`, `icon_cells`, `matrix_icon`, `mini_plot`,
   `image_icon`, `nn_diagram`, `conv_blocks`.
@@ -207,7 +225,7 @@ Gallery rebuild: `python scripts/render_gallery.py [prefix ...]`.
 ## 8. Do not
 
 - Use matplotlib defaults, `tab10`, `jet`, seaborn themes or `plt.style.use`.
-- Mix looks within one paper, or put the legend over data or text below 5 pt.
+- Mix looks or font sizes within one paper, or put the legend over data or text below 5 pt.
 - Use bars for distributions with n > 10 without the points, or 3-D charts where a heat map answers.
 - Copy a published figure; borrow the layout idea, draw it with your own data.
 - Deliver a figure you have not viewed as a rendered PNG.

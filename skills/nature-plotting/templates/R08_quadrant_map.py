@@ -24,7 +24,8 @@ named = np.argsort(-(s1 + s2))[:4].tolist() + [int(np.argmin(s2))]
 # -------------------------------------------
 fig, ax = plt.subplots(figsize=figsize_mm(80, 72))
 fig.subplots_adjust(left=0.13, right=0.97, bottom=0.13, top=0.97)
-ax.fill_between([split[0], 100], split[1], 100, color=PALETTE["mint"], alpha=0.35, lw=0, zorder=0)
+gradient_image(ax, (split[0], 100, split[1], 100), [mcolors.to_rgba(PALETTE["teal"], 0.04), mcolors.to_rgba(PALETTE["teal"], 0.32)],
+               direction="right", zorder=0)
 for v, f in ((split[0], ax.axvline), (split[1], ax.axhline)):
     f(v, color="0.45", lw=0.5, ls=(0, (3, 2)), zorder=1)
 inside = (s1 >= split[0]) & (s2 >= split[1])
@@ -32,10 +33,9 @@ ax.scatter(s1[~inside], s2[~inside], s=6 + 10 * w[~inside], color="0.7", lw=0, z
 ax.scatter(s1[inside], s2[inside], s=6 + 10 * w[inside], color=PALETTE["teal"], lw=0, zorder=3)
 for t, (x, y, ha, va) in {"High 1 / high 2": (99, 99, "right", "top"), "Low 1 / high 2": (1, 99, "left", "top"),
                           "Low 1 / low 2": (1, 1, "left", "bottom"), "High 1 / low 2": (99, 1, "right", "bottom")}.items():
-    ax.text(x, y, t, ha=ha, va=va, fontsize=6, color="0.45")
+    ax.text(x, y, t, ha=ha, va=va, color="0.45")
 for k, i in enumerate(named):
-    ax.annotate(f"Item {i + 1}", (s1[i], s2[i]), xytext=(8, -8 + 5 * (k % 3)), textcoords="offset points",
-                fontsize=6, va="center", arrowprops=dict(arrowstyle="-", lw=0.4, color="0.3", shrinkA=0, shrinkB=2))
+    ax.annotate(f"Item {i + 1}", (s1[i], s2[i]), xytext=(8, -8 + 5 * (k % 3)), textcoords="offset points", va="center", arrowprops=dict(arrowstyle="-", lw=0.4, color="0.3", shrinkA=0, shrinkB=2))
 ax.set_xlim(0, 100); ax.set_ylim(0, 100)
 ax.set_xlabel("Score 1"); ax.set_ylabel("Score 2")
 export(fig, "R08_quadrant_map")

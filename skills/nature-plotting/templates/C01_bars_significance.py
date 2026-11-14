@@ -27,7 +27,7 @@ fam4 = dict(labels=["Pair 1", "Pair 2", "Pair 3"], ns=[1064, 65, 338],
 cA, cB, cC = THEMES["soft"][0], THEMES["soft"][2], THEMES["soft"][3]
 cA2 = THEMES["soft"][1]
 fig = plt.figure(figsize=figsize_2col(62))
-gs = fig.add_gridspec(1, 4, width_ratios=[3, 3.6, 4.6, 3.4], wspace=0.12, left=0.06, right=0.995, top=0.86,
+gs = fig.add_gridspec(1, 4, width_ratios=[3.9, 3.6, 4.3, 3.4], wspace=0.12, left=0.06, right=0.995, top=0.86,
                       bottom=0.22)
 axs = [fig.add_subplot(gs[i]) for i in range(4)]
 
@@ -67,10 +67,10 @@ square_legend(ax, ["Method A", "Method D"], [cA, cA2], loc="upper right", bbox=(
 subtitle(ax, "Family 4")
 
 for i, ax in enumerate(axs):
-    ax.set_ylim(0, 114); ax.set_yticks([0, 20, 40, 60, 80, 100]); ax.spines["left"].set_bounds(0, 100)
+    ax.set_ylim(0, 114); ax.set_yticks([0, 20, 40, 60, 80, 100])
     ax.tick_params(axis="x", length=0)
     if i:
-        despine(ax, left=True); ax.tick_params(labelleft=False)
+        ax.tick_params(labelleft=False)
 axs[0].set_ylabel("Success (%)")
 fig.text(0.006, 0.97, "a", fontsize=8, fontweight="bold", va="top")
 export(fig, "C01_bars_significance")

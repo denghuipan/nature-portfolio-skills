@@ -31,12 +31,11 @@ for yi, n, e, h in zip(y, names, est, half):
     ax.plot([e - h, e + h], [yi, yi], color=c, lw=0.8, solid_capstyle="butt")
     ax.plot(e, yi, "o", color=c, ms=3.2 if n in focus else 2.6)
 ax.axvline(ref, color="0.3", ls=(0, (3, 2)), lw=0.6)
-ax.text(ref, len(names) - 0.2, "Reference", ha="center", va="bottom", fontsize=6, color="0.3")
+ax.text(ref, len(names) + 0.1, " Reference", ha="left", va="center", color="0.3")
 ax.set_yticks(y, [focus.get(n, n) for n in names])
 for t, n in zip(ax.get_yticklabels(), names):
     if n in focus:
         t.set_color(PALETTE["blue"] if n == names[-1] else PALETTE["ochre"])
-despine(ax, left=True)
-ax.set_ylim(-0.8, len(names) + 0.4)
+ax.set_ylim(-0.8, len(names) + 0.8)
 ax.set_xlabel("Score (95% CI)")
 export(fig, "C05_dot_ranking")

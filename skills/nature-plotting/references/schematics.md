@@ -19,13 +19,14 @@ Inside a composite figure, give the diagram its own axes with the same mm size a
 | Sequences | `chevrons` (ordered stages), `cycle_diagram` (closed loop), `timeline` (visits, schedule) |
 | Icons | `icon_graph`, `icon_stack`, `icon_bars`, `icon_person`, `icon_cells`, `matrix_icon`, `mini_plot`, `image_icon` |
 | Models | `nn_diagram`, `conv_blocks` |
-| Text | `label`, `section_header`, `divider` |
+| Text | `label`, `letter` (panel letter), `section_header`, `divider` |
 | Sketch plots | `concept_axes` (arrow-headed axes, no numbers) |
 | Line art | `beam`, `cone`, `lens`, `objective`, `beamsplitter`, `mirror`, `nd_filter`, `fiber`, `fiber_coil`, `camera`, `layer_stack`, `dimension`, `iso_block` |
 
 ## Style
-- Light pastel boxes with a slightly darker edge of the same hue, dark text, block counts or details as a
-  grey second line; at most four box colours, one per module family.
+- Pastel boxes with a soft vertical gradient (light top, fuller colour at the bottom) and a slightly darker
+  edge of the same hue, dark text, block counts or details as a grey second line in the same font size; at
+  most four box colours, one per module family. `GRADIENT_FILLS = False` gives flat fills.
 - Stream colours (data paths) are separate from box colours and named in a small key.
 - Feedback, recycling and repetition are dashed, with a short label on the longest segment.
 - Group frames are white with a coloured rounded edge and the group title centred above.

@@ -27,8 +27,8 @@ fig.subplots_adjust(left=0.14, right=0.97, bottom=0.14, top=0.94)
 up, dn = volcano(ax, effect, pval, effect_thr=1.0, p_thr=1e-3, names=names, label_top=8, s=3)
 ax.set_xlabel("Effect size (log$_2$ fold change)"); ax.set_ylabel("−log$_{10}$ P")
 ax.set_xlim(-4.2, 4.2); ax.set_ylim(0, None)
-ax.text(0.02, 0.03, f"{dn.sum():,} down", transform=ax.transAxes, va="bottom", fontsize=6,
+ax.text(0.02, 0.03, f"{dn.sum():,} down", transform=ax.transAxes, va="bottom",
         color=THEMES["updown"][1])
-ax.text(0.98, 0.03, f"{up.sum():,} up", transform=ax.transAxes, va="bottom", ha="right", fontsize=6,
+ax.text(0.98, 0.03, f"{up.sum():,} up", transform=ax.transAxes, va="bottom", ha="right",
         color=THEMES["updown"][0])
 export(fig, "R04_volcano")

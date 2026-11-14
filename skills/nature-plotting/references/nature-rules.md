@@ -16,7 +16,8 @@ Sources (re-check before submission; journals update their pages):
 | Exact page size | save without tight bbox | `export(fig, name, exact=True)` |
 
 ## Type
-- Sans serif (Arial), **5-7 pt** at final size; panel letters 8 pt bold lowercase (a, b, c).
+- Sans serif (Arial), **5-7 pt** at final size; panel letters 8 pt bold lowercase (a, b, c). House rule:
+  one size for all text (7 pt, `fs()`), so labels, ticks, legends and annotations match across panels.
 - No text below 5 pt, including super/subscripts (`nature_style` floors mathtext at 5 pt).
 - Symbol / Greek letters in the same face: `use_arial_math()`.
 - Panel subtitles regular weight, short; do not repeat the axis label.

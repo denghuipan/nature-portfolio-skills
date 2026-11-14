@@ -61,3 +61,14 @@ for papers already drawn in that style.
 
 Rules: label = quantity (unit); short outward ticks; hair-line outline (`style_cbar`); no more than 3-5
 tick labels; a side bar is as tall as its panel, a horizontal bar is shorter than the panel width.
+
+## Gradient backgrounds and fills
+- Every framed plotting panel gets a soft vertical gradient behind the data when the figure is saved
+  (`save_fig`, `save_fig_exact`, `export`): `#D3DFEE` at the bottom fading to near-white at the top.
+  Images, heat maps (`imshow`, `pcolormesh`, `hexbin`), colour bars, polar and 3-D axes are skipped.
+- `set_background("none")` turns it off for a paper; `set_background(color=PALETTE["teal"], strength=0.8)`
+  retints it; `bg_gradient(ax, color)` tints one panel; `no_background(ax)` keeps one panel plain.
+- Data gradients run from a light tint of the series colour at the base to the full colour at the top:
+  `bars` (default), `gbarh`, `gradient_patches` (one ramp shared by all histogram bars, log axes included),
+  `gradient_fill` (area under a curve), `regime` / `gradient_band` (windows and bands), `area_stack`,
+  `ridgeline`. Keep heat maps and images flat: a gradient there would read as data.

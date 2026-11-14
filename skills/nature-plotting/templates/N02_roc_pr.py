@@ -48,9 +48,9 @@ for ax in (a, b):
     ax.set_xticks([0, 0.5, 1]); ax.set_yticks([0, 0.5, 1])
 a.set_xlabel("False-positive rate"); a.set_ylabel("True-positive rate")
 b.set_xlabel("Recall"); b.set_ylabel("Precision")
-a.legend(loc="lower right", title="AUC", title_fontsize=6, handlelength=1.8)
-b.legend(loc="lower left", bbox_to_anchor=(0.0, 0.13), title="AP", title_fontsize=6, handlelength=1.8,
+a.legend(loc="lower right", title="AUC", handlelength=1.8)
+b.legend(loc="lower left", bbox_to_anchor=(0.0, 0.13), title="AP", handlelength=1.8,
          frameon=True, facecolor="white", edgecolor="none", framealpha=0.9)
-b.text(0.98, n_pos / (n_pos + n_neg) + 0.02, "Chance", fontsize=6, color="0.55", ha="right")
+b.text(0.98, n_pos / (n_pos + n_neg) - 0.025, "Chance", color="0.5", ha="right", va="top")
 panel_label(a, "a", dx=-0.3, dy=1.06); panel_label(b, "b", dx=-0.3, dy=1.06)
 export(fig, "N02_roc_pr")
