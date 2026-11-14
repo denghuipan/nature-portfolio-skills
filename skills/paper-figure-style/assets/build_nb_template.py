@@ -66,6 +66,8 @@ if not (ASSETS / "load_nature_style.py").is_file():
 sys.path.insert(0, str(ASSETS))
 import load_nature_style  # noqa: F401
 from nature_style import *  # noqa: F401,F403
+if "set_look" in globals():           # nature-plotting >= 4 默认开放坐标轴；本样式是四边框、刻度朝内
+    set_look("classic")
 
 _mock = Path("figure_mock")           # 模块 import 时的副作用，清理掉
 if _mock.exists() and not any(_mock.iterdir()):

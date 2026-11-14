@@ -1,41 +1,51 @@
-"""N01 -- Learning curves: training / validation loss over epochs (mean +- s.d. over seeds) and a metric.
-Use when: reporting how a model was trained (Methods, Extended Data) and where it was stopped.
-Nature notes: log loss axis; band = spread over seeds (say how many); the selected epoch marked once and
-referenced in the caption; validation drawn darker than training.
+"""N01 -- Training curves: every seed as a thin line, the mean on top, best checkpoint marked.
+Use when: loss and a validation metric are reported over training steps for several seeds / runs; showing
+all runs is more honest than a single smoothed line.
+Look: open axes, log step axis with plain tick labels (1,000 / 10,000 ...), light thin per-seed lines, bold
+mean, training vs validation in two tones of one hue, a dot and dashed drop line at the best step.
 """
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "assets"))
-from nature_style import *      # noqa: F401,F403  rcParams, PALETTE, figsize_*, panel_label, style_axes
+from nature_style import *      # noqa: F401,F403  rcParams, palettes, sizes, set_look, panel_label
 from nature_cmaps import *      # noqa: F401,F403  NS_* colour maps, palettes, colour-bar helpers
 from nature_charts import *     # noqa: F401,F403  chart builders, export()
 use_arial_math()                # maths ($x$, $\mu$) in the same sans face as the labels
 
 # ---------------- MOCK DATA ----------------
-rng = np.random.default_rng(61)
-ep = np.arange(1, 201)
+rng = np.random.default_rng(101)
+steps = np.unique(np.round(np.logspace(2, 5, 120)))
 seeds = 5
-train = np.array([0.8 * ep ** -0.55 * np.exp(rng.normal(0, 0.03, ep.size)) for _ in range(seeds)])
-val = np.array([0.9 * ep ** -0.45 + 2e-4 * (ep - 90).clip(0) + rng.normal(0, 0.004, ep.size) for _ in range(seeds)])
-metric = np.array([1 - 0.5 * ep ** -0.6 - 8e-5 * (ep - 90).clip(0) + rng.normal(0, 0.004, ep.size) for _ in range(seeds)])
+off = rng.normal(0, 1, seeds)                                          # seed-to-seed offsets
+train = np.array([2.4 * (steps / 100) ** -0.32 + 0.35 + 0.05 * o + rng.normal(0, 0.012, steps.size) for o in off])
+val = np.array([2.6 * (steps / 100) ** -0.27 + 0.55 + 0.36 * (steps / 1e5) ** 2 + 0.06 * o
+                + rng.normal(0, 0.02, steps.size) for o in off])
+acc = np.array([0.92 - 0.6 * (steps / 100) ** -0.45 - 0.08 * (steps / 1e5) ** 2 - 0.008 * o
+                + rng.normal(0, 0.005, steps.size) for o in off])
 # -------------------------------------------
-
-fig, (a, b) = plt.subplots(1, 2, figsize=figsize_2col(52), gridspec_kw=dict(wspace=0.3))
-for arr, c, name in [(train, PALETTE["lightblue"], "Training"), (val, PALETTE["blue"], "Validation")]:
-    m, s = arr.mean(0), arr.std(0)
-    ci_band(a, ep, m - s, m + s, c, alpha=0.25)
-    a.plot(ep, m, color=c, lw=1.0, label=name)
-best = int(ep[np.argmin(val.mean(0))])
-ref_line(a, best, "x", f"selected: epoch {best}", side="left", pos=0.30, color="0.4")
-a.set_yscale("log"); log_ticks(a.yaxis); a.set_xlim(0, 200)
-a.set_xlabel("Epoch"); a.set_ylabel("Loss"); a.legend(loc="upper right")
-m, s = metric.mean(0), metric.std(0)
-ci_band(b, ep, m - s, m + s, PALETTE["red"], alpha=0.2)
-b.plot(ep, m, color=PALETTE["red"], lw=1.0)
-b.plot(best, m[best - 1], "o", ms=3.5, mfc="w", mec=PALETTE["red"], mew=0.9, zorder=4)
-b.set_xlim(0, 200); b.set_ylim(0.7, 1.0); b.set_xlabel("Epoch"); b.set_ylabel("Validation score")
-stats_text(b, [f"mean ± s.d., {seeds} seeds"], loc="lower right")
-for ax_, l in ((a, "a"), (b, "b")):
-    style_axes(ax_); panel_label(ax_, l, dx=-0.2)
+dark, light = PAIRED[0][1], PAIRED[0][0]
+fig, (a, b) = plt.subplots(1, 2, figsize=figsize_mm(120, 50))
+fig.subplots_adjust(left=0.08, right=0.98, bottom=0.22, top=0.92, wspace=0.32)
+for arr, c, lab in ((train, light, "Training"), (val, dark, "Validation")):
+    for s in arr:
+        a.plot(steps, s, color=c, lw=0.35, alpha=0.6)
+    a.plot(steps, arr.mean(0), color=c, lw=1.2, label=lab)
+for s in acc:
+    b.plot(steps, s, color=PALETTE["ochre"], lw=0.35, alpha=0.6)
+m = acc.mean(0); k = int(np.argmax(m))
+b.plot(steps, m, color=PALETTE["ochre"], lw=1.2)
+b.plot(steps[k], m[k], "o", color="0.1", ms=3)
+b.plot([steps[k]] * 2, [0.5, m[k]], color="0.3", lw=0.5, ls=(0, (3, 2)))
+b.annotate(f"Best: {m[k]:.3f}\nat step {int(steps[k]):,}", (steps[k], 0.52), xytext=(-3, 0),
+           textcoords="offset points", ha="right", va="bottom", fontsize=6)
+for ax in (a, b):
+    ax.set_xscale("log"); ax.set_xlim(100, 1e5)
+    ax.set_xticks([100, 1000, 10000, 100000], ["100", "1,000", "10,000", "100,000"])
+    ax.xaxis.set_minor_locator(mticker.NullLocator())
+    ax.set_xlabel("Training step")
+a.set_ylabel("Loss"); a.set_ylim(0.4, 2.6); a.legend(loc="upper right")
+b.set_ylabel("Validation accuracy"); b.set_ylim(0.5, 0.95)
+b.text(0.02, 0.98, f"{seeds} seeds (thin); mean (bold)", transform=b.transAxes, va="top", fontsize=6, color="0.4")
+panel_label(a, "a", dx=-0.2, dy=1.08); panel_label(b, "b", dx=-0.2, dy=1.08)
 export(fig, "N01_training_curves")

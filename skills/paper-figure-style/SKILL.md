@@ -33,6 +33,8 @@ ASSETS = next((p for p in (Path.home() / d / "skills" / "nature-plotting" / "ass
 sys.path.insert(0, str(ASSETS))
 import load_nature_style
 from nature_style import *
+if "set_look" in globals():   # nature-plotting >= 4 defaults to open axes; this house style is the boxed one
+    set_look("classic")
 ```
 
 **One gotcha in that module:** `nature_style.save()` writes into `figure_preview/` by default; pass

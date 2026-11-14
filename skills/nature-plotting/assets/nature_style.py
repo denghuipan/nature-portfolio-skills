@@ -1,39 +1,48 @@
 """
 nature_style.py
 ================
-House plotting style for Nature-family journals (Nature, Nature Photonics, Nature Communications ...):
-rcParams, print sizes, palette, wavelength colour maps, export and pre-submission checks.
+House plotting style for Nature-family journals (Nature, Nature Communications, Nature Methods ...):
+rcParams, print sizes, palettes, axis "looks", export and pre-submission checks.
 
-Default preset ``np_final`` matches Nature Portfolio print widths (89 / 183 mm)
-and 5–7 pt typography at that size. Use ``apply_preset("preview")`` for large
-group-meeting previews.
+The default look follows what most recent Nature-family figures share: open L-shaped axes (left and bottom
+spines only), short outward ticks, no minor ticks, thin 0.6 pt axes and ~1 pt data lines, frameless legends,
+muted colours and generous white space. Other looks are one call away:
+
+    set_look("open")      default: L-axes, outward ticks, no minor ticks
+    set_look("grid")      open + faint horizontal grid (dense bar charts, time series)
+    set_look("framed")    full frame, outward ticks, faint grid (log-log physics / benchmark plots)
+    set_look("classic")   full frame, inward ticks on four sides, minor ticks, the older bright palette
+
+Print sizes use the Nature Portfolio guide: 89 mm (single column) / 183 mm (double), at most 170 mm tall,
+5-7 pt Arial. ``apply_preset("preview")`` gives large type for slides and group meetings.
 
 Usage:
     from nature_style import *
     fig, ax = plt.subplots(figsize=figsize_1col())
     ...
     save_fig(fig, "panel_a")
+
+Author: Denghui Pan
 """
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
-from matplotlib.patches import Polygon, Rectangle
-from matplotlib.collections import PolyCollection
+import matplotlib.ticker as mticker
 from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
 from pathlib import Path
 
 OUTDIR = Path("figure_preview")      # default output folder of save*(); created only when a figure is saved into it
 
-# ---------------- Nature Portfolio layout (Nature Photonics uses same guide) ----------------
+# ---------------- Nature Portfolio layout ----------------
 MM_PER_IN = 25.4
 WIDTH_1COL_MM = 89
 WIDTH_2COL_MM = 183
 MAX_FIG_HEIGHT_MM = 170
 
-# Common panel heights (mm), scaled from earlier preview aspect ratios at 89 mm width
-HEIGHT_1COL_STD_MM = 66
-HEIGHT_2COL_STD_MM = 76
+# Common panel heights (mm)
+HEIGHT_1COL_STD_MM = 62
+HEIGHT_2COL_STD_MM = 72
 HEIGHT_1COL_TALL_MM = 100
 
 SAVE_DPI = 600
@@ -46,27 +55,43 @@ _PRESETS = {
         "xtick.labelsize": 6,
         "ytick.labelsize": 6,
         "legend.fontsize": 6,
-        "lines.linewidth": 1.5,
-        "axes.linewidth": 0.8,
-        "xtick.major.size": 3.5,
-        "ytick.major.size": 3.5,
-        "xtick.major.width": 0.8,
-        "ytick.major.width": 0.8,
+        "lines.linewidth": 1.0,
+        "lines.markersize": 3.5,
+        "axes.linewidth": 0.6,
+        "xtick.major.size": 2.5,
+        "ytick.major.size": 2.5,
+        "xtick.major.width": 0.6,
+        "ytick.major.width": 0.6,
+        "xtick.minor.size": 1.5,
+        "ytick.minor.size": 1.5,
+        "xtick.minor.width": 0.5,
+        "ytick.minor.width": 0.5,
+        "patch.linewidth": 0.5,
+        "hatch.linewidth": 0.5,
+        "grid.linewidth": 0.4,
         "panel_label_size": 8,
     },
     "preview": {
         "font.size": 9,
-        "axes.labelsize": 11,
+        "axes.labelsize": 10,
         "axes.titlesize": 10,
         "xtick.labelsize": 9,
         "ytick.labelsize": 9,
         "legend.fontsize": 8,
-        "lines.linewidth": 1.8,
-        "axes.linewidth": 1.0,
-        "xtick.major.size": 4,
-        "ytick.major.size": 4,
-        "xtick.major.width": 1.0,
-        "ytick.major.width": 1.0,
+        "lines.linewidth": 1.5,
+        "lines.markersize": 5,
+        "axes.linewidth": 0.9,
+        "xtick.major.size": 3.5,
+        "ytick.major.size": 3.5,
+        "xtick.major.width": 0.9,
+        "ytick.major.width": 0.9,
+        "xtick.minor.size": 2.0,
+        "ytick.minor.size": 2.0,
+        "xtick.minor.width": 0.7,
+        "ytick.minor.width": 0.7,
+        "patch.linewidth": 0.8,
+        "hatch.linewidth": 0.7,
+        "grid.linewidth": 0.6,
         "panel_label_size": 11,
     },
 }
@@ -93,13 +118,28 @@ SANS = FONT_FAMILY[0]          # the face actually used (Arial on Windows / macO
 
 _BASE_RCPARAMS = {
     "font.family": FONT_FAMILY,
-    "xtick.direction": "in",
-    "ytick.direction": "in",
-    "xtick.minor.visible": True,
-    "ytick.minor.visible": True,
-    "xtick.top": True,
-    "ytick.right": True,
+    "axes.labelpad": 2.5,
+    "axes.titlepad": 4.0,
+    "axes.titleweight": "normal",
+    "axes.axisbelow": True,
+    "axes.edgecolor": "0.15",
+    "axes.labelcolor": "0.1",
+    "xtick.color": "0.15",
+    "ytick.color": "0.15",
+    "xtick.major.pad": 2.0,
+    "ytick.major.pad": 2.0,
+    "grid.color": "0.89",
     "legend.frameon": False,
+    "legend.handlelength": 1.4,
+    "legend.handleheight": 0.7,
+    "legend.handletextpad": 0.5,
+    "legend.borderaxespad": 0.3,
+    "legend.borderpad": 0.3,
+    "legend.labelspacing": 0.35,
+    "legend.columnspacing": 1.0,
+    "errorbar.capsize": 0.0,
+    "scatter.edgecolors": "none",
+    "image.interpolation": "nearest",
     "figure.dpi": 120,
     "savefig.dpi": SAVE_DPI,
     "savefig.bbox": "tight",
@@ -107,6 +147,39 @@ _BASE_RCPARAMS = {
     "ps.fonttype": 42,
     "svg.fonttype": "none",
 }
+
+# axis looks: which spines, tick direction / sides, minor ticks, grid
+_LOOKS = {
+    "open": {
+        "axes.spines.top": False, "axes.spines.right": False,
+        "xtick.direction": "out", "ytick.direction": "out",
+        "xtick.top": False, "ytick.right": False,
+        "xtick.minor.visible": False, "ytick.minor.visible": False,
+        "axes.grid": False,
+    },
+    "grid": {
+        "axes.spines.top": False, "axes.spines.right": False,
+        "xtick.direction": "out", "ytick.direction": "out",
+        "xtick.top": False, "ytick.right": False,
+        "xtick.minor.visible": False, "ytick.minor.visible": False,
+        "axes.grid": True, "axes.grid.axis": "y", "axes.grid.which": "major",
+    },
+    "framed": {
+        "axes.spines.top": True, "axes.spines.right": True,
+        "xtick.direction": "out", "ytick.direction": "out",
+        "xtick.top": False, "ytick.right": False,
+        "xtick.minor.visible": False, "ytick.minor.visible": False,
+        "axes.grid": True, "axes.grid.axis": "both", "axes.grid.which": "major",
+    },
+    "classic": {
+        "axes.spines.top": True, "axes.spines.right": True,
+        "xtick.direction": "in", "ytick.direction": "in",
+        "xtick.top": True, "ytick.right": True,
+        "xtick.minor.visible": True, "ytick.minor.visible": True,
+        "axes.grid": False,
+    },
+}
+_ACTIVE_LOOK = "open"
 
 
 def mm_to_in(mm):
@@ -131,7 +204,7 @@ def figsize_1col_tall(height_mm=HEIGHT_1COL_TALL_MM):
 
 
 def apply_preset(name="np_final"):
-    """Switch typography / line weights. ``np_final`` = Nature Portfolio submission."""
+    """Switch typography / line weights. ``np_final`` = Nature Portfolio submission, ``preview`` = slides."""
     global _ACTIVE_PRESET, _PANEL_LABEL_SIZE
     if name not in _PRESETS and name not in _PRESET_ALIASES:
         raise ValueError(f"Unknown preset {name!r}; choose from {list(_PRESETS)}")
@@ -147,18 +220,52 @@ def active_preset():
     return _ACTIVE_PRESET
 
 
-# ---------------- palette (from reference cards) ----------------
-PALETTE = {
+# ---------------- palettes ----------------
+# EDITORIAL (default): muted mid-tone hues that read on white at 1 pt and stay apart for most colour-vision
+# deficiencies when combined with marker shape or line style. Order = the order to use them in.
+EDITORIAL = ["#3A6EA5", "#D08C34", "#3E9A8E", "#7A5BA8", "#B8503A", "#6E9A5E", "#C9708A", "#8A8A8A"]
+_EDITORIAL_NAMES = ["blue", "ochre", "teal", "plum", "brick", "sage", "rose", "grey"]
+
+PALETTE_EDITORIAL = dict(zip(_EDITORIAL_NAMES, EDITORIAL))
+PALETTE_EDITORIAL.update({
+    "ink": "#1F2A3A", "navy": "#24466E", "sky": "#9DBCDD", "lavender": "#B9ABDA", "mint": "#A9D6CB",
+    "peach": "#EFC29A", "sand": "#E8D6A8", "lightgrey": "#C8C8C8", "darkgrey": "#4D4D4D",
+    # aliases so older scripts keep running
+    "red": "#B8503A", "green": "#6E9A5E", "purple": "#7A5BA8", "orange": "#D08C34", "gray": "#8A8A8A",
+    "skyblue": "#9DBCDD", "lightblue": "#C7D9EC", "salmon": "#E7B39E", "pink": "#E3B4C3", "olive": "#A9B97A",
+    "brown": "#8A5A35",
+})
+
+# the older bright set (kept for set_look("classic") and the paper-figure-style skill)
+CLASSIC_CYCLE = ["#2C6AB4", "#E84143", "#39AF6B", "#B69BC8", "#5AB2E4", "#EA998F", "#9ED0C6", "#F5DEA8"]
+PALETTE_CLASSIC = {
     "red": "#E84143", "rose": "#EE8284", "salmon": "#EA998F",
     "blue": "#2C6AB4", "navy": "#7491C9", "skyblue": "#5AB2E4", "lightblue": "#8DCCF0",
     "green": "#39AF6B", "teal": "#92CCBB", "mint": "#9ED0C6",
     "purple": "#B69BC8", "pink": "#EDA2C5",
-    "sand": "#F5DEA8", "olive": "#D3E2B4", "gray": "#807979", "brown": "#8B5A2B",
+    "sand": "#F5DEA8", "olive": "#D3E2B4", "gray": "#807979", "grey": "#807979", "brown": "#8B5A2B",
 }
-CYCLE = ["#2C6AB4", "#E84143", "#39AF6B", "#B69BC8", "#5AB2E4", "#EA998F", "#9ED0C6", "#F5DEA8"]
 
-SPECTRAL = mcolors.LinearSegmentedColormap.from_list(
-    "spectral_vis", ["#2C2C8F", "#2C6AB4", "#39AF6B", "#9ED0C6", "#F5DEA8", "#EA998F", "#E84143", "#8B1A1C"])
+# THEMES: small palettes for one figure's job (all hex, all used by the templates)
+THEMES = {
+    # two tones of one hue: "reference set" (light) vs "new set" (dark)
+    "duo_purple": ["#3E1F63", "#8E80CF"],
+    "duo_blue": ["#1F3E68", "#8DB0D8"],
+    "duo_teal": ["#155E57", "#8CCBBE"],
+    # soft fills for bars: tool of interest in light blue, baselines in greys
+    "soft": ["#A9C9EC", "#6F98C9", "#C9C9C9", "#8F8F8F"],
+    # scenario fans (low / mid / high)
+    "fan": ["#4FA67A", "#7769B5", "#B9772F"],
+    # hollow-marker trio for experiment-vs-model plots
+    "signal": ["#C0504D", "#4E9A47", "#5470B5"],
+    # earthy categorical set for field / ecology data
+    "earth": ["#5B7F3A", "#C49A3A", "#7A4E2D", "#4F7FA0", "#A5583F", "#8C8C6E"],
+    # up / down / not significant (volcano, gain vs loss)
+    "updown": ["#B8503A", "#3A6EA5", "#C8C8C8"],
+}
+
+PALETTE = dict(PALETTE_EDITORIAL)
+CYCLE = list(EDITORIAL)
 
 
 def n_colors(cmap, n, lo=0.0, hi=1.0):
@@ -166,59 +273,119 @@ def n_colors(cmap, n, lo=0.0, hi=1.0):
     cmap = mpl.colormaps[cmap] if isinstance(cmap, str) else cmap
     return [cmap(v) for v in np.linspace(lo, hi, n)]
 
-# wavelength colour map, visible to near-infrared (480-920 nm): blue -> cyan -> green -> yellow -> red -> dark red
-VNIR_RANGE = (480, 920)                          # nm; use Normalize(*VNIR_RANGE) with SPECTRUM_VNIR
-SPECTRUM_VNIR = mcolors.LinearSegmentedColormap.from_list("spectrum_vnir", [
-    ((w - VNIR_RANGE[0]) / (VNIR_RANGE[1] - VNIR_RANGE[0]), c) for w, c in [
-        (480, "#283A6E"), (500, "#3A64A3"), (550, "#5AAABF"), (600, "#71AE78"), (650, "#E0C063"),
-        (700, "#C8423A"), (800, "#842022"), (920, "#2A0A0B")]])
-# same stops with HLS saturation x1.4: for thin lines and small markers
-SPECTRUM_VNIR_SAT = mcolors.LinearSegmentedColormap.from_list("spectrum_vnir_sat", [
-    ((w - VNIR_RANGE[0]) / (VNIR_RANGE[1] - VNIR_RANGE[0]), c) for w, c in [
-        (480, "#1A337C"), (500, "#2560B8"), (550, "#46B6D3"), (600, "#65BA6F"), (650, "#F9CC4A"),
-        (700, "#E4291E"), (800, "#980C0F"), (920, "#300405")]])
-
 
 def desaturate_cmap(cmap, k, n=256):
     """cmap with its HLS saturation scaled by k (k < 1: softer)."""
     import colorsys
+    cmap = mpl.colormaps[cmap] if isinstance(cmap, str) else cmap
     rgb = [colorsys.hls_to_rgb(h, l, min(1.0, s * k)) for h, l, s in
            (colorsys.rgb_to_hls(*cmap(i / (n - 1))[:3]) for i in range(n))]
     return mcolors.ListedColormap(rgb, name=f"{cmap.name}_x{k}")
 
 
-# HLS saturation x0.75: muted version for large fills and many overlapping curves
-SPECTRUM_VNIR_SOFT = desaturate_cmap(SPECTRUM_VNIR, 0.75)
+def set_look(name="open", palette=None):
+    """Switch the axis look for every figure made afterwards: open | grid | framed | classic.
+    ``classic`` also switches PALETTE / CYCLE to the older bright set (unless palette= is given);
+    the others use EDITORIAL. PALETTE and CYCLE are changed in place, so names imported earlier stay valid."""
+    global _ACTIVE_LOOK
+    if name not in _LOOKS:
+        raise ValueError(f"Unknown look {name!r}; choose from {list(_LOOKS)}")
+    _ACTIVE_LOOK = name
+    mpl.rcParams.update(_LOOKS[name])
+    if palette is None:
+        palette = "classic" if name == "classic" else "editorial"
+    src_p, src_c = (PALETTE_CLASSIC, CLASSIC_CYCLE) if palette == "classic" else (PALETTE_EDITORIAL, EDITORIAL)
+    PALETTE.clear(); PALETTE.update(src_p)
+    CYCLE[:] = src_c
+    mpl.rcParams["axes.prop_cycle"] = mpl.cycler(color=CYCLE)
+    if name == "classic":
+        mpl.rcParams.update({"xtick.major.size": 3.5, "ytick.major.size": 3.5,
+                             "axes.linewidth": 0.8, "xtick.major.width": 0.8, "ytick.major.width": 0.8,
+                             "lines.linewidth": 1.5})
+    else:
+        apply_preset(_ACTIVE_PRESET)
 
 
-def wl_color(w, cmap=None):
-    """Colour of wavelength w (nm) in SPECTRUM_VNIR_SAT (or cmap) over VNIR_RANGE."""
-    lo, hi = VNIR_RANGE
-    return (cmap or SPECTRUM_VNIR_SAT)(float(np.clip((w - lo) / (hi - lo), 0, 1)))
-
-NATURE_DIV = mcolors.LinearSegmentedColormap.from_list(
-    "nature_div", ["#2C6AB4", "#8DCCF0", "#FFFFFF", "#EE8284", "#E84143"])
-NATURE_SEQ = mcolors.LinearSegmentedColormap.from_list(
-    "nature_seq", ["#FCEDEC", "#F8B3B0", "#EA998F", "#E84143", "#A3201F"])
-NATURE_COOL = mcolors.LinearSegmentedColormap.from_list(
-    "nature_cool", ["#EAF3FB", "#BAE1F3", "#5AB2E4", "#2C6AB4", "#173A66"])
+def active_look():
+    return _ACTIVE_LOOK
 
 
 def _init_rcparams():
     mpl.rcParams.update(_BASE_RCPARAMS)
-    mpl.rcParams["axes.prop_cycle"] = mpl.cycler(color=CYCLE)
     apply_preset("np_final")
+    set_look("open")
 
 
 _init_rcparams()
 
 
 # ---------------- helpers ----------------
-def style_axes(ax):
+def style_axes(ax, look=None):
+    """Apply a look to one existing Axes (e.g. axes made before set_look, or one framed panel in an open figure)."""
+    look = look or _ACTIVE_LOOK
+    p = _LOOKS[look]
     lw = mpl.rcParams["axes.linewidth"]
-    for s in ax.spines.values():
+    for side, s in ax.spines.items():
         s.set_linewidth(lw)
-    ax.tick_params(which="both", direction="in", top=True, right=True)
+        if side in ("top", "right"):
+            s.set_visible(p[f"axes.spines.{side}"])
+    ax.tick_params(which="both", direction=p["xtick.direction"], top=p["xtick.top"], right=p["ytick.right"])
+    if p["xtick.minor.visible"]:
+        ax.minorticks_on()
+    else:
+        ax.minorticks_off()
+    if p["axes.grid"]:
+        ax.grid(True, axis=p.get("axes.grid.axis", "both"))
+    else:
+        ax.grid(False)
+
+
+def despine(ax, left=False, bottom=False, top=True, right=True):
+    """Hide spines (True = hide). Horizontal bar charts: despine(ax, left=True) and drop the y ticks."""
+    for side, hide in (("left", left), ("bottom", bottom), ("top", top), ("right", right)):
+        ax.spines[side].set_visible(not hide)
+    if left:
+        ax.tick_params(axis="y", left=False)
+    if bottom:
+        ax.tick_params(axis="x", bottom=False)
+
+
+def offset_spines(ax, mm=1.2, sides=("left", "bottom"), trim=False):
+    """Move spines outward by *mm* (detached-axes look). trim=True ends each spine at the outer major ticks."""
+    pts = mm / MM_PER_IN * 72
+    for s in sides:
+        ax.spines[s].set_position(("outward", pts))
+    if trim:
+        ax.figure.canvas.draw()
+        xt = [t for t in ax.get_xticks() if ax.get_xlim()[0] <= t <= ax.get_xlim()[1]]
+        yt = [t for t in ax.get_yticks() if ax.get_ylim()[0] <= t <= ax.get_ylim()[1]]
+        if xt and "bottom" in sides:
+            ax.spines["bottom"].set_bounds(min(xt), max(xt))
+        if yt and "left" in sides:
+            ax.spines["left"].set_bounds(min(yt), max(yt))
+
+
+def thousands(ax, axis="y", decimals=0):
+    """Comma thousands separators on tick labels (1,000 / 20,000 / 400,000), the Nature number style."""
+    f = mticker.FuncFormatter(lambda v, _: f"{v:,.{decimals}f}")
+    (ax.yaxis if axis == "y" else ax.xaxis).set_major_formatter(f)
+
+
+def percent(ax, axis="y", decimals=0, scale=100.0):
+    """Tick labels as percentages; scale=100 when data are fractions, scale=1 when data are already in %."""
+    f = mticker.FuncFormatter(lambda v, _: f"{v * scale:.{decimals}f}%")
+    (ax.yaxis if axis == "y" else ax.xaxis).set_major_formatter(f)
+
+
+def fmt_int(v):
+    """1234567 -> '1,234,567' (for n = labels and in-figure counts)."""
+    return f"{int(round(v)):,}"
+
+
+def subtitle(ax, text, pad=None, **kw):
+    """Centred panel subtitle above the axes, regular weight (Nature uses bold only for panel letters)."""
+    kw.setdefault("fontsize", mpl.rcParams["axes.titlesize"])
+    return ax.set_title(text, pad=pad if pad is not None else mpl.rcParams["axes.titlepad"], **kw)
 
 
 def panel_label(ax, letter, dx=-0.16, dy=1.04, size=None):
@@ -240,43 +407,6 @@ def save_fig(fig, name, outdir=OUTDIR, transparent=False, dpi=SAVE_DPI):
     outdir.mkdir(parents=True, exist_ok=True)
     fig.savefig(outdir / (name + ".png"), dpi=dpi, bbox_inches="tight", transparent=transparent)
     fig.savefig(outdir / (name + ".pdf"), bbox_inches="tight", transparent=transparent)
-
-
-def gradient_bars(ax, x, heights, width=0.62, c_bottom="#D9E8F5", c_top="#2C6AB4",
-                  edge="#1F4E85", lw=1.0, zorder=2, ymax=None):
-    """Vertical-gradient-filled bars (bottom -> top)."""
-    cmap = mcolors.LinearSegmentedColormap.from_list("barcmap", [c_bottom, c_top])
-    grad = np.linspace(0, 1, 256).reshape(-1, 1)
-    x = np.asarray(x, dtype=float)
-    heights = np.asarray(heights, dtype=float)
-    for xi, h in zip(x, heights):
-        ax.imshow(grad, extent=(xi - width / 2, xi + width / 2, 0, h), origin="lower",
-                  aspect="auto", cmap=cmap, vmin=0, vmax=1, zorder=zorder)
-        ax.add_patch(Rectangle((xi - width / 2, 0), width, h, fill=False,
-                               edgecolor=edge, linewidth=lw, zorder=zorder + 1))
-    ax.set_xlim(x.min() - 0.7, x.max() + 0.7)
-    ax.set_ylim(0, (ymax if ymax else heights.max() * 1.18))
-
-
-def gradient_fill(ax, x, y, color="#E84143", alpha=0.40, ymin=0.0, zorder=1):
-    """Vertical alpha-gradient fill under a curve."""
-    x = np.asarray(x, dtype=float)
-    y = np.asarray(y, dtype=float)
-    rgb = mcolors.to_rgb(color)
-    grad = np.empty((256, 1, 4))
-    grad[:, :, 0] = rgb[0]
-    grad[:, :, 1] = rgb[1]
-    grad[:, :, 2] = rgb[2]
-    grad[:, :, 3] = np.linspace(0, alpha, 256)[:, None]
-    im = ax.imshow(grad, aspect="auto", origin="lower",
-                   extent=(x.min(), x.max(), ymin, y.max()), zorder=zorder)
-    verts = np.column_stack([np.concatenate([x, x[::-1]]),
-                             np.concatenate([y, np.full_like(y, ymin)])])
-    clip = Polygon(verts, closed=True, facecolor="none", edgecolor="none",
-                   transform=ax.transData)
-    ax.add_patch(clip)
-    im.set_clip_path(clip)
-    return im
 
 
 def gauss(x, c, A=1.0, w=1.5):
@@ -351,17 +481,6 @@ def center_subtitles(fig, specs, below_mm=30.0, pad_mm=3.0, min_w_mm=3.0):
                 xs += [p.x0, p.x1]
         if xs:
             t.set_ha("center"); t.set_x((min(xs) + max(xs)) / 2)
-
-
-def tint_axes(ax, color, a_bottom=0.22, a_top=0.03, n=256):
-    """Soft vertical colour wash behind the data of ax (strongest at the bottom), in the panel's own colour --
-    the 'tinted panel' style. Data limits are left untouched."""
-    xl, yl = ax.get_xlim(), ax.get_ylim()
-    img = np.ones((n, 2, 4)); img[:, :, :3] = mcolors.to_rgb(color)
-    img[:, :, 3] = np.linspace(a_bottom, a_top, n)[:, None]
-    ax.imshow(img, origin="lower", aspect="auto", interpolation="bilinear", transform=ax.transAxes,
-              extent=(0, 1, 0, 1), zorder=0)
-    ax.set_xlim(xl); ax.set_ylim(yl)
 
 
 def pin_top_letters(fig, top_mm=1.0, band_mm=3.0):

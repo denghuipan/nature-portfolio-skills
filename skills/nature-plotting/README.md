@@ -1,12 +1,14 @@
 # nature-plotting 模板库
 
-Nature 系列期刊风格的 matplotlib 绘图模板。共 53 个模板，覆盖常见数据图表、Nature 风格色条和简单概念图。
-图里的数据全部是虚拟的（Data 1、Data 2、Group A……），换成自己的数据即可。
+Nature 系列期刊风格的 matplotlib 绘图模板，共 62 个。版式参考了大量近年 Nature、Nature Methods、
+Nature Communications、Nature Climate Change 等论文中反复出现的图形做法（开放坐标轴、外向短刻度、柔和配色、
+显著性括号与 n、千分位数字、虚线图例框、情景扇形带、蝴蝶图、表格图、流程框图等），全部重新绘制，
+不复制任何已发表的图。图中数据都是虚拟的（Data 1、Group A、Method B……），换成自己的数据即可。
 
 ## 用法
 
 ```bash
-python templates/L01_regime_lines.py          # 运行单个模板，输出到 ./figure_preview/（PNG 600 dpi + PDF）
+python templates/C01_bars_significance.py     # 运行单个模板，输出到 ./figure_preview/（PNG 600 dpi + PDF）
 python scripts/render_gallery.py              # 重新生成本页全部预览图
 python scripts/audit_layout.py fig.pdf        # 检查 PDF：尺寸、字体、字号、面板字母、对齐、分辨率
 ```
@@ -15,156 +17,170 @@ python scripts/audit_layout.py fig.pdf        # 检查 PDF：尺寸、字体、�
 2. 复制模板，只替换 `MOCK DATA` 这一段数据，其余保持不变。
 3. 运行，打开 PNG 逐个面板检查，再跑 `audit_layout.py`。
 
-模块：`assets/nature_style.py`（样式、尺寸、导出）、`assets/nature_charts.py`（图表构件）、
+模块：`assets/nature_style.py`（样式、坐标外观、尺寸、导出）、`assets/nature_charts.py`（图表构件）、
 `assets/nature_cmaps.py`（色图、配色、色条）、`assets/nature_schematic.py`（示意图元件）。
 
-规范：单栏 89 mm，双栏 183 mm，高度 ≤ 170 mm；Arial 5–7 pt；刻度朝内、四边、无网格；
-避免彩虹色图和红绿对比。详见 `references/nature-rules.md`。
+规范：单栏 89 mm，双栏 183 mm，高度 ≤ 170 mm；Arial 5–7 pt；默认开放 L 形坐标轴、外向短刻度、无次刻度；
+`set_look("grid" | "framed" | "classic")` 可切换外观（见 K04）；避免彩虹色图和单纯红绿对比。
+详见 `references/nature-rules.md`。
 
-## 折线与趋势
 
-| **L01_regime_lines**<br>两条曲线 + 失效区渐变 + 阈值线 + 双单位横轴 | **L02_sigmoid_fit**<br>S 形拟合、阈值交点、两曲线平移量（双箭头） |
+## 趋势与时间序列
+
+| **T01_marker_decay_log**<br>空心 o / × / + 标记 vs 模型线（对数轴），虚线框图例与插图，外推区箭头标注代价 | **T02_scenario_fans**<br>情景扇形图：中位线 + 两层不确定带，分歧年份虚线；下方 3×3 区域小图共享坐标 |
 |---|---|
-| ![L01_regime_lines](gallery/L01_regime_lines.png) | ![L02_sigmoid_fit](gallery/L02_sigmoid_fit.png) |
+| ![T01_marker_decay_log](gallery/T01_marker_decay_log.png) | ![T02_scenario_fans](gallery/T02_scenario_fans.png) |
 
-| **L03_hue_lines**<br>按连续参数着色的曲线族 + 色条 + 检出下限渐变区 | **L04_loglog_powerlaw**<br>双对数幂律参考线；排序谱与截断点标注 |
+| **T03_scaling_bands**<br>成功率随样本量（对数 x）：两方法点线 + 置信带，右侧竖向显著性括号 | **T04_growth_bars**<br>随时间增长的窄柱，同色系深浅区分来源，千分位逗号 |
 |---|---|
-| ![L03_hue_lines](gallery/L03_hue_lines.png) | ![L04_loglog_powerlaw](gallery/L04_loglog_powerlaw.png) |
+| ![T03_scaling_bands](gallery/T03_scaling_bands.png) | ![T04_growth_bars](gallery/T04_growth_bars.png) |
 
-| **L05_ci_band**<br>多方法 vs 条件，5–95 % 区间带、外推虚线、特殊标记 | **L06_dual_axis**<br>左右双 y 轴，轴色与曲线色一致 |
+| **T05_slopegraph**<br>斜率图：两时间点配对连线，突出上升 / 下降项，其余灰色 | **T06_stacked_area**<br>堆叠面积（层内直接标注）+ 占比折线（末端标签自动避让） |
 |---|---|
-| ![L05_ci_band](gallery/L05_ci_band.png) | ![L06_dual_axis](gallery/L06_dual_axis.png) |
+| ![T05_slopegraph](gallery/T05_slopegraph.png) | ![T06_stacked_area](gallery/T06_stacked_area.png) |
 
-| **L07_broken_windows**<br>断轴：多个窄窗口并排，// 断点标记 | **L08_inset_zoom**<br>全局 + 局部放大插图 + 宽度双箭头 |
+| **T07_events_timeseries**<br>长时间序列：原始值浅线 + 滑动均值，阴影时间窗，顶部事件标注（grid 外观） | **T08_trace_state_raster**<br>连续信号 + 事件栅格 + 状态色带，共享时间轴，比例尺代替坐标轴 |
 |---|---|
-| ![L07_broken_windows](gallery/L07_broken_windows.png) | ![L08_inset_zoom](gallery/L08_inset_zoom.png) |
+| ![T07_events_timeseries](gallery/T07_events_timeseries.png) | ![T08_trace_state_raster](gallery/T08_trace_state_raster.png) |
 
-| **L09_step_series**<br>阶梯曲线（设定值/搜索过程），上下共享时间轴 | **L10_stacked_metrics**<br>多个指标共享 x 轴纵向堆叠 |
-|---|---|
-| ![L09_step_series](gallery/L09_step_series.png) | ![L10_stacked_metrics](gallery/L10_stacked_metrics.png) |
-
-## 曲线组与剖面
-
-| **P01_small_multiples**<br>3×3 小多图，共用坐标标签，面板内标注 | **P02_offset_curves**<br>偏移堆叠曲线 + 共同特征虚线 |
-|---|---|
-| ![P01_small_multiples](gallery/P01_small_multiples.png) | ![P02_offset_curves](gallery/P02_offset_curves.png) |
-
-| **P03_uncertainty_bands**<br>均值 ± σ 不确定度带，三种条件 | **P04_difference_curves**<br>差值曲线 + 低置信区阴影 |
-|---|---|
-| ![P03_uncertainty_bands](gallery/P03_uncertainty_bands.png) | ![P04_difference_curves](gallery/P04_difference_curves.png) |
 
 ## 比较
 
-| **C01_bar_points**<br>柱状图 + 误差棒 + 每个样本点（小 n） | **C02_grouped_stacked**<br>分组柱状图；100 % 堆叠条形图 |
+| **C01_bars_significance**<br>分组基准柱：浅色主方法 + 灰色基线，误差线、显著性括号、类目下方 n | **C02_overlay_bars**<br>叠加柱：子集画在总量之内，对数与线性两种坐标 |
 |---|---|
-| ![C01_bar_points](gallery/C01_bar_points.png) | ![C02_grouped_stacked](gallery/C02_grouped_stacked.png) |
+| ![C01_bars_significance](gallery/C01_bars_significance.png) | ![C02_overlay_bars](gallery/C02_overlay_bars.png) |
 
-| **C03_lollipop_dumbbell**<br>排序棒棒糖图；前后对比哑铃图 | **C04_waterfall_budget**<br>瀑布 / 预算图（增减与总量） |
+| **C03_butterfly_counts**<br>蝴蝶图：左右对称计数，中列标签，虚线分组 + 侧边方括号组名 | **C04_error_budget**<br>误差预算：水平堆叠条，未解释部分斜线填充，实测总量点 |
 |---|---|
-| ![C03_lollipop_dumbbell](gallery/C03_lollipop_dumbbell.png) | ![C04_waterfall_budget](gallery/C04_waterfall_budget.png) |
+| ![C03_butterfly_counts](gallery/C03_butterfly_counts.png) | ![C04_error_budget](gallery/C04_error_budget.png) |
 
-| **C05_landscape**<br>文献对比图：形状区分类别、编号不重叠、目标区、This work | **C06_range_rows**<br>对数轴区间图，按行分组，内嵌色条 |
+| **C05_dot_ranking**<br>Cleveland 点图排名：区间线 + 参考值，重点条目着色 | **C06_forest_table**<br>森林图 + 数值表：权重方块、合并菱形、零效应线、有利方向标注 |
 |---|---|
-| ![C05_landscape](gallery/C05_landscape.png) | ![C06_range_rows](gallery/C06_range_rows.png) |
+| ![C05_dot_ranking](gallery/C05_dot_ranking.png) | ![C06_forest_table](gallery/C06_forest_table.png) |
 
-| **C07_forest**<br>森林图：效应量与 95 % CI | **C08_radar**<br>雷达图（4–8 个归一化指标） |
+| **C07_table_scatter**<br>表格图（斑马纹、双线分组、改进值着色）+ 黑边高亮标注散点 | **C08_part_of_whole**<br>部分与整体：环形图、100% 堆叠条、华夫图，同色同义 |
 |---|---|
-| ![C07_forest](gallery/C07_forest.png) | ![C08_radar](gallery/C08_radar.png) |
+| ![C07_table_scatter](gallery/C07_table_scatter.png) | ![C08_part_of_whole](gallery/C08_part_of_whole.png) |
+
+| **C09_horizontal_pairs**<br>长类目名的水平配对条形 + 百分比轴 | **C10_dumbbell_change**<br>哑铃图：两条件数值，按变化量排序，增减着色，右侧写 Δ |
+|---|---|
+| ![C09_horizontal_pairs](gallery/C09_horizontal_pairs.png) | ![C10_dumbbell_change](gallery/C10_dumbbell_change.png) |
+
 
 ## 分布
 
-| **D01_box_jitter**<br>箱线图 + 散点 | **D02_raincloud**<br>雨云图：半密度 + IQR + 原始点 |
+| **D01_violin_box**<br>小提琴 + 内嵌箱线 + 全部数据点，精确 P 值括号，类目下方 n | **D02_hist_fit**<br>直方图 + 拟合曲线与参数；对数计数轴上的双组分拟合 |
 |---|---|
-| ![D01_box_jitter](gallery/D01_box_jitter.png) | ![D02_raincloud](gallery/D02_raincloud.png) |
+| ![D01_violin_box](gallery/D01_violin_box.png) | ![D02_hist_fit](gallery/D02_hist_fit.png) |
 
-| **D03_strip_mean_twin**<br>按步骤的散点 + 均值±s.d. + 第二指标双轴 | **D04_hist_kde_ecdf**<br>阶梯直方图 + 核密度；累积分布 ECDF |
+| **D03_step_hist_log**<br>两个数量级差异很大的群体：阶梯直方图（对数计数）+ 阈值线 | **D04_ecdf_quantiles**<br>经验累积分布 + 中位数落线；分位数点线（10/50/90%） |
 |---|---|
-| ![D03_strip_mean_twin](gallery/D03_strip_mean_twin.png) | ![D04_hist_kde_ecdf](gallery/D04_hist_kde_ecdf.png) |
+| ![D03_step_hist_log](gallery/D03_step_hist_log.png) | ![D04_ecdf_quantiles](gallery/D04_ecdf_quantiles.png) |
 
-| **D05_ridgeline**<br>山脊图：分布随有序因子变化 | **D06_joint_hexbin**<br>六边形密度图 + 边缘直方图 + 对数色条 |
+| **D05_ridgeline_outline**<br>山脊图：顺序色、白底遮挡、中位数短线 | **D06_beeswarm**<br>蜂群图：每个观测可见，中位数横线 + IQR 竖线（对数轴） |
 |---|---|
-| ![D05_ridgeline](gallery/D05_ridgeline.png) | ![D06_joint_hexbin](gallery/D06_joint_hexbin.png) |
+| ![D05_ridgeline_outline](gallery/D05_ridgeline_outline.png) | ![D06_beeswarm](gallery/D06_beeswarm.png) |
+
+| **D07_paired_points**<br>配对数据：连线 + 均值±s.e.m.；差值蜂群 + 95% CI | **D08_density_contours**<br>二维密度等高线（25/50/75/95% 质量）+ 抽样散点 + 边缘密度 |
+|---|---|
+| ![D07_paired_points](gallery/D07_paired_points.png) | ![D08_density_contours](gallery/D08_density_contours.png) |
+
 
 ## 关系
 
-| **R01_parity_residual**<br>预测–真值对角图 + 残差子图 + MAE/RMSE/R² | **R02_scatter_color_size**<br>散点：颜色 = 第三变量（色条），大小 = 第四变量 |
+| **R01_dense_scatter_zoom**<br>密集散点 + y = x + 回归线，右侧放大面板并用连线指向放大区域 | **R02_binned_trend**<br>分箱均值 ± s.e.m. 趋势 + 下方每箱样本数条带 |
 |---|---|
-| ![R01_parity_residual](gallery/R01_parity_residual.png) | ![R02_scatter_color_size](gallery/R02_scatter_color_size.png) |
+| ![R01_dense_scatter_zoom](gallery/R01_dense_scatter_zoom.png) | ![R02_binned_trend](gallery/R02_binned_trend.png) |
 
-| **R03_fit_ci**<br>误差棒 + 拟合线 + 95 % 置信带 + 沿线公式 + 第二单位轴 | **R04_category_scatter**<br>按类别区分形状与颜色的散点 + 超限区 |
+| **R03_bubble_colorbar**<br>气泡散点：大小 = 权重，颜色 = 第三变量，色条在下方，ρ 与 P 写在角上 | **R04_volcano**<br>火山图：上 / 下调着色、虚线阈值、显著项自动避让标注、计数 |
 |---|---|
-| ![R03_fit_ci](gallery/R03_fit_ci.png) | ![R04_category_scatter](gallery/R04_category_scatter.png) |
+| ![R03_bubble_colorbar](gallery/R03_bubble_colorbar.png) | ![R04_volcano](gallery/R04_volcano.png) |
 
-## 矩阵、二维场与图像
-
-| **M01_heatmap_annotated**<br>白色网格热图 + 对数色条 + 独立汇总行 | **M02_corr_triangle**<br>下三角相关矩阵，中心固定的发散色条 |
+| **R05_embedding_clusters**<br>二维嵌入（UMAP 等）：簇名写在簇中心，角落箭头坐标；连续变量着色 + 内嵌色条 | **R06_parity_density**<br>预测 vs 参考：六边形密度（对数）、±容差虚线、误差直方图插图 |
 |---|---|
-| ![M01_heatmap_annotated](gallery/M01_heatmap_annotated.png) | ![M02_corr_triangle](gallery/M02_corr_triangle.png) |
+| ![R05_embedding_clusters](gallery/R05_embedding_clusters.png) | ![R06_parity_density](gallery/R06_parity_density.png) |
 
-| **M03_confusion**<br>混淆矩阵（行归一化 % + 计数） | **M04_image_plate**<br>图像拼板：黑底、通道标注、比例尺 |
+| **R07_group_regression**<br>分组回归：形状 + 颜色区分组，95% CI 带，线端写斜率 | **R08_quadrant_map**<br>象限图：参考线划分四区，目标区浅色，角落区名，引线标注 |
 |---|---|
-| ![M03_confusion](gallery/M03_confusion.png) | ![M04_image_plate](gallery/M04_image_plate.png) |
+| ![R07_group_regression](gallery/R07_group_regression.png) | ![R08_quadrant_map](gallery/R08_quadrant_map.png) |
 
-| **M05_map_extend**<br>二维图：extend 三角色条、区域标签；对数图 | **M06_contour_sweep**<br>参数扫描等高线 + 约束区 + 最优点 |
-|---|---|
-| ![M05_map_extend](gallery/M05_map_extend.png) | ![M06_contour_sweep](gallery/M06_contour_sweep.png) |
 
-| **M07_phase_vector**<br>相位图（循环色图）；矢量场流线 | **M08_surface3d**<br>三维曲面 + 底面投影（慎用） |
-|---|---|
-| ![M07_phase_vector](gallery/M07_phase_vector.png) | ![M08_surface3d](gallery/M08_surface3d.png) |
+## 矩阵、场与图像
 
-| **M09_cluster_heatmap**<br>聚类热图 + 双向树状图 | |
+| **M01_dot_matrix**<br>点矩阵：点面积 = 比例，颜色 = 平均水平，特征组括号，大小图例 | **M02_cluster_heatmap**<br>聚类热图：列树状图、行分组色条、发散色图、短色条 |
 |---|---|
-| ![M09_cluster_heatmap](gallery/M09_cluster_heatmap.png) | |
+| ![M01_dot_matrix](gallery/M01_dot_matrix.png) | ![M02_cluster_heatmap](gallery/M02_cluster_heatmap.png) |
+
+| **M03_corr_circles**<br>相关矩阵：下三角圆（大小与颜色 = r），上三角数值（显著加粗） | **M04_confusion_support**<br>混淆矩阵（行归一化 %）+ 右侧各类样本数条形 |
+|---|---|
+| ![M03_corr_circles](gallery/M03_corr_circles.png) | ![M04_confusion_support](gallery/M04_confusion_support.png) |
+
+| **M05_field_stipple**<br>格点场：发散色 + 等值线 + 显著性打点 + 区域虚线框 + 下方色条 | **M06_image_grid**<br>图像网格：条件 × 通道 + 绿 / 品红合成 + 局部放大 + 比例尺 |
+|---|---|
+| ![M05_field_stipple](gallery/M05_field_stipple.png) | ![M06_image_grid](gallery/M06_image_grid.png) |
+
+| **M07_polar_rose**<br>极坐标玫瑰图：方向分布 + 平均合成向量，R 与 Rayleigh P | **M08_spectrogram**<br>时频图：原始信号 + 对数频率谱图 + dB 色条 + 事件线 |
+|---|---|
+| ![M07_polar_rose](gallery/M07_polar_rose.png) | ![M08_spectrogram](gallery/M08_spectrogram.png) |
+
 
 ## 机器学习
 
-| **N01_training_curves**<br>训练/验证损失（多种子 ± s.d.）+ 选定 epoch | **N02_roc_pr**<br>ROC 与 PR 曲线，AUC / AP |
+| **N01_training_curves**<br>训练曲线：每个种子细线 + 均值粗线，最佳步标注 | **N02_roc_pr**<br>ROC 与 PR：AUC / AP 写在图例，工作点圆点，机会线 |
 |---|---|
 | ![N01_training_curves](gallery/N01_training_curves.png) | ![N02_roc_pr](gallery/N02_roc_pr.png) |
 
-## 色图、色条与配色
+| **N03_scaling_law**<br>缩放律：不同规模模型的损失-算力曲线 + 前沿幂律拟合 + 离散色条 | **N04_calibration**<br>可靠性图：观测频率 vs 预测概率，间隙柱 + 样本数条带，ECE |
+|---|---|
+| ![N03_scaling_law](gallery/N03_scaling_law.png) | ![N04_calibration](gallery/N04_calibration.png) |
 
-**K01_colormaps** — 全部内置色图及其明度 L* 曲线
 
-![K01_colormaps](gallery/K01_colormaps.png)
+## 生物医学
 
-**K02_colorbar_styles** — 九种 Nature 风格色条
+| **B01_survival_km**<br>Kaplan–Meier：CI 带、删失刻度、HR 与 log-rank P、风险人数表 | **B02_dose_response**<br>剂量-反应：均值 ± s.e.m.、四参数 logistic 拟合、EC50 落线 |
+|---|---|
+| ![B01_survival_km](gallery/B01_survival_km.png) | ![B02_dose_response](gallery/B02_dose_response.png) |
 
-![K02_colorbar_styles](gallery/K02_colorbar_styles.png)
+**B03_timecourse_stars** — 时间进程：两组均值 ± s.e.m.，处理时间窗，逐时间点星号；AUC 柱 + 点
 
-**K03_palettes_cvd** — 离散配色在色觉缺陷下的模拟
+![B03_timecourse_stars](gallery/B03_timecourse_stars.png)
 
-![K03_palettes_cvd](gallery/K03_palettes_cvd.png)
 
-## 示意图与概念图
+## 流向与网络
 
-**S01_flowchart** — 两阶段流程示意图（图标化）
+| **G01_alluvial**<br>冲积图：三阶段间的流向，节点高度 ∝ 数量 | **G02_node_link**<br>节点-连线网络：节点大小、边宽（对数）图例、角色分组括号 |
+|---|---|
+| ![G01_alluvial](gallery/G01_alluvial.png) | ![G02_node_link](gallery/G02_node_link.png) |
 
-![S01_flowchart](gallery/S01_flowchart.png)
 
-**S02_optical_setup** — 光路 / 实验装置线稿
+## 色图、色条、配色与坐标外观
 
-![S02_optical_setup](gallery/S02_optical_setup.png)
+| **K01_colormaps**<br>全部内置色图及其 CIE L* 亮度曲线（顺序 / 发散 / 循环） | **K02_colorbar_styles**<br>六种色条布局：侧边、内嵌、下方、分箱、类别、发散 + extend |
+|---|---|
+| ![K01_colormaps](gallery/K01_colormaps.png) | ![K02_colorbar_styles](gallery/K02_colorbar_styles.png) |
 
-**S03_device_concept** — 结构示意：等轴测 + 截面尺寸 + 俯视图
+| **K03_palettes_cvd**<br>分类配色在正常视觉与三种色觉缺陷下的样子 | **K04_axis_looks**<br>同一面板的四种坐标外观：open（默认）、grid、framed、classic |
+|---|---|
+| ![K03_palettes_cvd](gallery/K03_palettes_cvd.png) | ![K04_axis_looks](gallery/K04_axis_looks.png) |
 
-![S03_device_concept](gallery/S03_device_concept.png)
 
-**S04_network** — 神经网络：全连接 + 卷积块
+## 示意图
 
-![S04_network](gallery/S04_network.png)
+| **S01_pipeline_loop**<br>流程总览：两条并行分支（彩色圆角框）、评估、数据库、输出、虚线循环 | **S02_architecture**<br>模型结构框图：输入数据库、带块数的模块、三色数据流、⊕ 汇合、虚线循环 |
+|---|---|
+| ![S01_pipeline_loop](gallery/S01_pipeline_loop.png) | ![S02_architecture](gallery/S02_architecture.png) |
 
-**S05_concept_sketch** — 定性概念图：权衡、区域图、前后对比
+| **S03_cycle_stages**<br>迭代环 + 同一流程的箭头阶段与小图标 | **S04_study_design**<br>研究设计：入组人数、随机分组、访视时间轴与各项测量 |
+|---|---|
+| ![S03_cycle_stages](gallery/S03_cycle_stages.png) | ![S04_study_design](gallery/S04_study_design.png) |
 
-![S05_concept_sketch](gallery/S05_concept_sketch.png)
+| **S05_concept_sketches**<br>定性示意：两种标度及交叉、双势阱能量曲线、三集合交集计数 | **S06_icon_workflow**<br>图形摘要式工作流：样本 → 测量 → 数据矩阵 → 模型 → 预测 |
+|---|---|
+| ![S05_concept_sketches](gallery/S05_concept_sketches.png) | ![S06_icon_workflow](gallery/S06_icon_workflow.png) |
 
-**S06_process_flow** — 工艺 / 流程步骤截面图
-
-![S06_process_flow](gallery/S06_process_flow.png)
 
 ## 组合图
 
-**F01_composite_figure** — 完整双栏组合图（183 mm）：示意 + 5 个数据面板
+**F01_composite_figure** — 完整双栏组合页（183 × 150 mm）：流程图 + 五个数据面板
 
 ![F01_composite_figure](gallery/F01_composite_figure.png)

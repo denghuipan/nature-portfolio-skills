@@ -7,15 +7,15 @@ Rules this module is built around (Nature figure guide + Crameri et al., Nat. Co
   * no rainbow / jet maps for ordered data; lightness must change monotonically (sequential) or
     symmetrically about a neutral centre (diverging);
   * no red-green pairs for categories that must be told apart;
-  * colour bars are part of the data: slim, labelled with quantity and unit, ticks inward,
-    outline at the axes line width, extend triangles when values are clipped.
+  * colour bars are part of the data: slim, labelled with quantity and unit, short outward ticks,
+    hair-line outline, extend triangles when values are clipped.
 
 Usage
 -----
     from nature_style import *
     from nature_cmaps import *
 
-    im = ax.imshow(z, cmap=NS_EMBER)
+    im = ax.imshow(z, cmap=NS_DUSK)
     cb = cbar_side(ax, im, "Intensity (norm.)", extend="max")
 
 Every ``NS_*`` map is also registered with matplotlib as ``"ns_<name>"`` (e.g. ``cmap="ns_ember"``),
@@ -33,23 +33,22 @@ import matplotlib.ticker as mticker
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
-from nature_style import (PALETTE, CYCLE, SPECTRUM_VNIR, SPECTRUM_VNIR_SAT, SPECTRUM_VNIR_SOFT, VNIR_RANGE,
-                          NATURE_DIV, NATURE_SEQ, NATURE_COOL)
+from nature_style import PALETTE, CYCLE, EDITORIAL, THEMES
 
 __all__ = [
     # maps
     "NS_REDS", "NS_BLUES", "NS_GREENS", "NS_PURPLES", "NS_GRAYS",
-    "NS_EMBER", "NS_GLACIER", "NS_SUNSET",
+    "NS_EMBER", "NS_GLACIER", "NS_SUNSET", "NS_DUSK", "NS_SEAFLOOR",
     "NS_DIV_BR", "NS_DIV_PG", "NS_DIV_BO", "NS_DIV_DARK",
     "NS_PHASE", "NS_VISIBLE",
     "SEQUENTIAL", "DIVERGING", "CYCLIC", "SPECIAL", "ALL_CMAPS",
     # palettes
-    "HOUSE", "HOUSE_DARK", "OKABE_ITO", "PAIRED", "GRAYS", "METHOD_COLORS",
+    "HOUSE", "HOUSE_DARK", "EDITORIAL", "THEMES", "OKABE_ITO", "PAIRED", "GRAYS", "METHOD_COLORS",
     # colour science
     "srgb_to_lab", "lightness", "is_monotonic", "simulate_cvd", "wavelength_rgb",
     "discrete_cmap", "truncate_cmap", "lighten", "darken",
     # colour bars
-    "style_cbar", "cbar_side", "cbar_inset", "cbar_top", "cbar_span", "cbar_discrete",
+    "style_cbar", "cbar_side", "cbar_below", "cbar_inset", "cbar_top", "cbar_span", "cbar_discrete",
     "cbar_endlabels", "line_mappable", "spectrum_strip", "center_norm", "log_ticks",
 ]
 
@@ -170,30 +169,34 @@ def discrete_cmap(cmap, n):
     return mcolors.ListedColormap(cmap(np.linspace(0, 1, n)), name=f"{cmap.name}_{n}")
 
 
-# Sequential, single hue (white -> house colour -> near black). L* falls monotonically.
-NS_REDS = _make("reds", ["#FFF6F4", "#F9C9C3", "#F08A82", "#E84143", "#A3201F", "#4A0C0D"])
-NS_BLUES = _make("blues", ["#F4F8FC", "#C9DDF0", "#86B4DE", "#2C6AB4", "#173A66", "#0A1A30"])
-NS_GREENS = _make("greens", ["#F3FAF5", "#C5E7D1", "#7CC79B", "#39AF6B", "#1C6B3F", "#0B2E1B"])
-NS_PURPLES = _make("purples", ["#F7F3FA", "#DDD0E9", "#B69BC8", "#7E5AA6", "#4B2A79", "#1F0F36"])
+# Sequential, single hue (white -> hue -> near black). L* falls monotonically.
+NS_REDS = _make("reds", ["#FCF6F3", "#F2D3C7", "#E3A089", "#C9663F", "#8E3620", "#3E150C"])
+NS_BLUES = _make("blues", ["#F5F8FC", "#D3E1F0", "#9DBCDD", "#5A8BC0", "#2E5A8E", "#132A47"])
+NS_GREENS = _make("greens", ["#F3F9F7", "#CDE7E0", "#92C9BC", "#4C9C8D", "#24665B", "#0C2E29"])
+NS_PURPLES = _make("purples", ["#F8F5FB", "#DDD4EC", "#B3A3D4", "#8169B4", "#55388A", "#23123E"])
 NS_GRAYS = _make("grays", ["#F7F7F7", "#CFCFCF", "#9A9A9A", "#666666", "#333333", "#0D0D0D"])
 
 # Sequential, multi hue.
-#   EMBER   dark -> purple -> red -> gold -> cream : intensity images, camera frames (inferno-like, house hues)
-#   GLACIER navy -> blue -> teal -> mint -> cream  : densities, maps on white pages (cool counterpart)
-#   SUNSET  cream -> sand -> salmon -> red -> wine : error / loss heat maps (light = good, dark = bad)
-NS_EMBER = _make("ember", ["#07071A", "#2B1250", "#6B1F6E", "#B2304F", "#E84143", "#F2853A", "#F8C45C", "#FCF1C8"])
-NS_GLACIER = _make("glacier", ["#0B1730", "#173A66", "#2C6AB4", "#3E9BC9", "#6CC3C1", "#A8DCC5", "#E2F2DE", "#FBFDF5"])
-NS_SUNSET = _make("sunset", ["#FFF9EC", "#F7E3B5", "#F2C08F", "#EC8E77", "#E84143", "#A3201F", "#4A0C0D"])
+#   EMBER    black -> indigo -> plum -> brick -> amber -> cream : intensity images, camera frames
+#   GLACIER  ink -> blue -> teal -> mint -> cream               : densities, maps on white pages
+#   SUNSET   cream -> sand -> peach -> brick -> umber           : error / loss maps (light = good, dark = bad)
+#   DUSK     pale yellow -> amber -> rose -> magenta -> indigo  : scatter colour, ordered categories, bubbles
+#   SEAFLOOR pale -> aqua -> teal -> deep blue -> ink           : depth-like quantities, counts
+NS_EMBER = _make("ember", ["#0A0A1F", "#2A1A50", "#5C2A72", "#953A5E", "#C8573E", "#E08C34", "#EDC35C", "#F8EFC6"])
+NS_GLACIER = _make("glacier", ["#0E1B33", "#1F3E68", "#3A6EA5", "#3E9A8E", "#7DC3A9", "#C3E3C8", "#F4FAEF"])
+NS_SUNSET = _make("sunset", ["#FFF8EA", "#F6E0B0", "#ECBA80", "#D98A5A", "#B8503A", "#7E2A20", "#3A110C"])
+NS_DUSK = _make("dusk", ["#F4E66A", "#EDB144", "#DF7F51", "#C45474", "#963A8E", "#5E2A8C", "#241C5C"])
+NS_SEAFLOOR = _make("seafloor", ["#F2F7F5", "#C6E6E0", "#86CBC3", "#46A3A6", "#2C6F91", "#203F6E", "#141C3A"])
 
 # Diverging: neutral light centre, matched lightness on both arms.
-NS_DIV_BR = _make("div_br", ["#14305A", "#2C6AB4", "#8DBEE6", "#F5F5F5", "#F2A19C", "#D03A3C", "#6B1214"])
-NS_DIV_PG = _make("div_pg", ["#3A1E5C", "#7E5AA6", "#D6C4E3", "#F5F5F5", "#A9D9B9", "#2E8F57", "#0B3D20"])
-NS_DIV_BO = _make("div_bo", ["#14305A", "#2C6AB4", "#9CC6E8", "#F5F5F5", "#F6C48F", "#C96A22", "#5A2606"])
+NS_DIV_BR = _make("div_br", ["#1B3558", "#3A6EA5", "#9DBCDD", "#F4F4F2", "#E7B39E", "#B8503A", "#5E2216"])
+NS_DIV_PG = _make("div_pg", ["#3B2063", "#7A5BA8", "#CFC3E3", "#F4F4F2", "#A9D6CB", "#3E9A8E", "#11463F"])
+NS_DIV_BO = _make("div_bo", ["#1B3558", "#3A6EA5", "#A8C3E0", "#F4F4F2", "#EFCB95", "#D08C34", "#6A3E0E"])
 # dark centre (for signed data shown on a black image plate)
-NS_DIV_DARK = _make("div_dark", ["#9CD3F5", "#2C6AB4", "#0D1626", "#000000", "#2A0A0B", "#E84143", "#F7B4AE"])
+NS_DIV_DARK = _make("div_dark", ["#A8C9EC", "#3A6EA5", "#0F1A2C", "#000000", "#2C0F08", "#C9663F", "#F0C3A8"])
 
 # Cyclic (phase, angle): same colour at 0 and 2*pi, light at 0, dark at pi.
-NS_PHASE = _make("phase", ["#EDEDED", "#8DBEE6", "#2C6AB4", "#1B1B33", "#A3201F", "#E84143", "#F2A19C", "#EDEDED"])
+NS_PHASE = _make("phase", ["#EDEDED", "#9DBCDD", "#3A6EA5", "#1B1B33", "#8E3620", "#C9663F", "#E7B39E", "#EDEDED"])
 
 # True visible colours 380-780 nm (labels / strips only; not perceptually uniform)
 _vis_wl = np.linspace(380, 780, 256)
@@ -201,43 +204,39 @@ NS_VISIBLE = mcolors.ListedColormap(wavelength_rgb(_vis_wl), name="ns_visible")
 if "ns_visible" not in mpl.colormaps:
     mpl.colormaps.register(NS_VISIBLE)
 
-for _c in (SPECTRUM_VNIR, SPECTRUM_VNIR_SAT, SPECTRUM_VNIR_SOFT):
-    if _c.name not in mpl.colormaps:
-        mpl.colormaps.register(_c)
-
 SEQUENTIAL = {"NS_REDS": NS_REDS, "NS_BLUES": NS_BLUES, "NS_GREENS": NS_GREENS, "NS_PURPLES": NS_PURPLES,
-              "NS_GRAYS": NS_GRAYS, "NS_EMBER": NS_EMBER, "NS_GLACIER": NS_GLACIER, "NS_SUNSET": NS_SUNSET}
+              "NS_GRAYS": NS_GRAYS, "NS_EMBER": NS_EMBER, "NS_GLACIER": NS_GLACIER, "NS_SUNSET": NS_SUNSET,
+              "NS_DUSK": NS_DUSK, "NS_SEAFLOOR": NS_SEAFLOOR}
 DIVERGING = {"NS_DIV_BR": NS_DIV_BR, "NS_DIV_PG": NS_DIV_PG, "NS_DIV_BO": NS_DIV_BO, "NS_DIV_DARK": NS_DIV_DARK}
 CYCLIC = {"NS_PHASE": NS_PHASE}
-SPECIAL = {"SPECTRUM_VNIR_SAT": SPECTRUM_VNIR_SAT, "SPECTRUM_VNIR_SOFT": SPECTRUM_VNIR_SOFT,
-           "NS_VISIBLE": NS_VISIBLE}
+SPECIAL = {"NS_VISIBLE": NS_VISIBLE}
 ALL_CMAPS = {**SEQUENTIAL, **DIVERGING, **CYCLIC, **SPECIAL}
 
 # ----------------------------------------------------------------------------------- categorical palettes
-# HOUSE: default series colours (same as nature_style.CYCLE). First four are distinct for deutan/protan readers
-# when paired with different markers or line styles.
-HOUSE = list(CYCLE)
-# HOUSE_DARK: line colours with enough contrast on white for thin (0.75-1 pt) lines and small text.
-HOUSE_DARK = ["#2C6AB4", "#D03A3C", "#2E8F57", "#6A4C93", "#C99A1E", "#2A8C8C", "#8C5A2B", "#555555"]
+# HOUSE: default series colours (= nature_style.EDITORIAL). Pair colour with marker shape or line style when
+# more than four series must be told apart.
+HOUSE = list(EDITORIAL)
+# HOUSE_DARK: darker versions for thin (0.6-1 pt) lines and coloured text.
+HOUSE_DARK = ["#2A5585", "#A86A1F", "#2B776D", "#5C4087", "#8E3620", "#4F7841", "#A2506B", "#555555"]
 # Okabe & Ito (2008): the reference colour-blind-safe set (use when > 4 categories must be separable by colour alone)
 OKABE_ITO = ["#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7"]
-# PAIRED: (light, dark) of one hue -- raw vs processed, train vs test, before vs after
-PAIRED = [("#8DCCF0", "#2C6AB4"), ("#F2A19C", "#E84143"), ("#9ED0C6", "#2E8F57"),
-          ("#D6C4E3", "#6A4C93"), ("#F5DEA8", "#C99A1E"), ("#CFCFCF", "#555555")]
+# PAIRED: (light, dark) of one hue -- raw vs processed, train vs test, before vs after, reference vs new
+PAIRED = [("#A9C9EC", "#3A6EA5"), ("#F0CC98", "#D08C34"), ("#A9D6CB", "#3E9A8E"),
+          ("#CFC3E3", "#7A5BA8"), ("#E7B39E", "#B8503A"), ("#CFCFCF", "#555555")]
 GRAYS = ["#1A1A1A", "#4D4D4D", "#808080", "#A6A6A6", "#CCCCCC", "#E6E6E6"]
-# Fixed roles: "this work" is always the saturated red; references / baselines stay in blues and greys.
-METHOD_COLORS = {"this_work": "#E84143", "ours": "#E84143", "baseline": "#808080", "baseline2": "#2C6AB4",
-                 "reference": "#000000", "ground_truth": "#000000", "simulation": "#7F7F7F", "model": "#5B2C91"}
+# Fixed roles: the method being proposed keeps one strong hue; baselines stay grey; ground truth is black.
+METHOD_COLORS = {"this_work": "#3A6EA5", "ours": "#3A6EA5", "baseline": "#9A9A9A", "baseline2": "#C9C9C9",
+                 "reference": "#000000", "ground_truth": "#000000", "simulation": "#7F7F7F", "model": "#1A1A1A"}
 
 
 # ----------------------------------------------------------------------------------- colour bars
-def style_cbar(cb, label=None, labelpad=2.0, ticks_in=True, minor=False, outline_lw=None, label_loc=None):
-    """House look for a colour bar: outline = axes line width, short inward ticks, optional label."""
-    lw = outline_lw if outline_lw is not None else mpl.rcParams["axes.linewidth"]
+def style_cbar(cb, label=None, labelpad=2.0, ticks_in=False, minor=False, outline_lw=None, label_loc=None):
+    """House look for a colour bar: hair-line outline, short outward ticks, optional label."""
+    lw = outline_lw if outline_lw is not None else 0.8 * mpl.rcParams["axes.linewidth"]
     cb.outline.set_linewidth(lw)
     ax = cb.ax
     ax.tick_params(which="both", direction="in" if ticks_in else "out",
-                   length=mpl.rcParams["xtick.major.size"] * 0.6, width=lw,
+                   length=mpl.rcParams["xtick.major.size"] * 0.8, width=lw,
                    labelsize=mpl.rcParams["ytick.labelsize"])
     ax.tick_params(which="minor", length=mpl.rcParams["xtick.major.size"] * 0.35)
     if not minor:
@@ -274,6 +273,12 @@ def cbar_side(ax, mappable, label=None, size="4%", pad=0.05, side="right", exten
         cax.xaxis.set_ticks_position("top"); cax.xaxis.set_label_position("top")
         cax.tick_params(top=True, labeltop=True, bottom=False, labelbottom=False)
     return cb
+
+
+def cbar_below(ax, mappable, label=None, size="5%", pad=0.42, **kw):
+    """Horizontal colour bar under the panel (below the x-axis label), label under the bar -- the layout of
+    scatter plots coloured by a third variable. pad is in inches; raise it if the x label is two lines."""
+    return cbar_side(ax, mappable, label, size=size, pad=pad, side="bottom", **kw)
 
 
 def cbar_top(ax, mappable, label=None, size="5%", pad=0.04, **kw):
@@ -374,18 +379,17 @@ def line_mappable(cmap, vmin=None, vmax=None, norm=None):
 
 
 def spectrum_strip(ax, lo=None, hi=None, height=0.035, cmap=None, where="bottom", alpha=1.0, zorder=3):
-    """Colour strip along the x axis inside the frame (wavelength key under a spectrum).
-    Default map: SPECTRUM_VNIR_SAT over the current x range; pass cmap=NS_VISIBLE + lo/hi in nm for true colour."""
+    """Colour strip along the x axis inside the frame (a wavelength key under a spectrum, a phase key ...).
+    Default: true visible colours (NS_VISIBLE) with lo/hi = the x range in nm; any other map is stretched
+    over [lo, hi]."""
     x0, x1 = ax.get_xlim()
     lo = x0 if lo is None else lo
     hi = x1 if hi is None else hi
-    cmap = cmap or SPECTRUM_VNIR_SAT
+    cmap = NS_VISIBLE if cmap is None else (mpl.colormaps[cmap] if isinstance(cmap, str) else cmap)
     if cmap is NS_VISIBLE:
-        cols = wavelength_rgb(np.linspace(lo, hi, 512))
-        img = cols[None, :, :]
+        img = wavelength_rgb(np.linspace(lo, hi, 512))[None, :, :]
     else:
-        frac = (np.linspace(lo, hi, 512) - VNIR_RANGE[0]) / (VNIR_RANGE[1] - VNIR_RANGE[0])
-        img = cmap(np.clip(frac, 0, 1))[None, :, :3]
+        img = cmap(np.linspace(0, 1, 512))[None, :, :3]
     y0, y1 = (0, height) if where == "bottom" else (1 - height, 1)
     ax.imshow(img, extent=(lo, hi, y0, y1), transform=ax.get_xaxis_transform(), aspect="auto",
               alpha=alpha, zorder=zorder, interpolation="bilinear")

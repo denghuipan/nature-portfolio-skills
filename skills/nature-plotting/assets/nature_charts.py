@@ -13,8 +13,13 @@ Grouped by job:
     lines / bands   ci_band, step_series
     distributions   boxplot, jitter, half_violin, mean_sd, hist_step, kde_line, ecdf, ridgeline
     comparison      bars, grouped_bars, stacked_barh, lollipop, dumbbell, waterfall, forest, radar
-    matrices        heatmap, corr_triangle
-    relationships   parity, fit_line, landscape
+    matrices        heatmap, corr_triangle, dot_matrix
+    relationships   parity, fit_line, landscape, binned_stat, highlight_points, volcano, zoom_to
+    statistics      sig_bracket, p_to_stars, n_ticklabels, mean_sem, kaplan_meier, km_curve, at_risk_table,
+                    hill, fit_hill
+    editorial       butterfly, bracket_label, fan, legend_box, dashed_frame, arrow_note, size_legend,
+                    square_legend, overlay_bars, area_stack, donut, waffle, zebra_table, beeswarm, paired_lines
+    flows / graphs  alluvial, node_link
     export          export
 
 Author: Denghui Pan
@@ -32,17 +37,23 @@ import matplotlib.ticker as mticker
 import matplotlib.transforms as mtransforms
 from matplotlib.patches import Rectangle, FancyArrowPatch, Polygon
 
-from nature_style import (PALETTE, CYCLE, MM_PER_IN, SAVE_DPI, style_axes, save_fig, save_fig_exact,
-                          audit_text, gradient_fill)
+from nature_style import (PALETTE, CYCLE, THEMES, MM_PER_IN, SAVE_DPI, style_axes, save_fig, save_fig_exact,
+                          audit_text)
 from nature_cmaps import lighten, darken, HOUSE, HOUSE_DARK
 
 __all__ = [
     "direct_label", "end_label", "ref_line", "regime", "band", "double_arrow", "callout", "stats_text",
-    "place_labels", "secondary_unit_axis", "broken_windows", "share_labels",
+    "place_labels", "end_labels", "secondary_unit_axis", "broken_windows", "share_labels",
     "inset_zoom", "scale_bar", "despine_inner", "ci_band", "step_series", "boxplot", "jitter", "half_violin",
     "mean_sd", "hist_step", "kde_line", "ecdf", "ridgeline", "bars", "grouped_bars", "stacked_barh",
     "lollipop", "dumbbell", "waterfall", "forest", "radar", "heatmap", "corr_triangle", "parity",
     "fit_line", "landscape", "export", "pt",
+    # editorial helpers
+    "sig_bracket", "p_to_stars", "n_ticklabels", "butterfly", "bracket_label", "fan", "binned_stat",
+    "legend_box", "dashed_frame", "arrow_note", "kaplan_meier", "km_curve", "at_risk_table", "volcano",
+    "dot_matrix", "size_legend", "alluvial", "beeswarm_x", "beeswarm", "paired_lines", "donut", "waffle",
+    "zebra_table", "zoom_to", "highlight_points", "node_link", "hill", "fit_hill", "mean_sem", "overlay_bars",
+    "square_legend", "area_stack",
 ]
 
 
@@ -98,10 +109,10 @@ def ref_line(ax, value, axis="x", label=None, color="0.35", ls=":", lw=None, pos
     return ln
 
 
-def regime(ax, x0, x1, color="0.45", gradient=True, fade="in", alpha=(0.0, 0.45), label=None,
+def regime(ax, x0, x1, color="0.5", gradient=False, fade="in", alpha=(0.0, 0.12), label=None,
            label_color=None, label_rot=90, label_x=None, zorder=0.5):
     """Shade an x-interval spanning the full height: a 'below detection limit', 'failure' or 'not accessible' zone.
-    gradient=True draws a horizontal alpha ramp (fade='in': transparent at x0 -> alpha[1] at x1; 'out' reverse),
+    Default: a flat light band. gradient=True draws a horizontal alpha ramp (fade='in': transparent at x0 -> alpha[1] at x1; 'out' reverse),
     which reads as 'getting worse towards the edge' without a hard boundary."""
     rgb = mcolors.to_rgb(color)
     if gradient:
@@ -205,6 +216,36 @@ def place_labels(ax, xs, ys, texts, colors=None, fontsize=None, offsets=None, av
             best = (tx, tx.get_window_extent(r))
         taken.append(best[1])
         out.append(best[0])
+    return out
+
+
+def end_labels(ax, x, ys, texts, colors=None, dx=3.0, min_gap=7.0, fontsize=None, ha="left", **kw):
+    """Labels at the right end of several lines (x, ys[i]) pushed apart vertically so that no two are closer than
+    min_gap points (they may sit outside the axes, as in most Nature line charts). Returns the Text artists."""
+    fig = ax.figure
+    fig.canvas.draw()
+    ys = np.asarray(ys, float)
+    disp = ax.transData.transform(np.column_stack([np.full(ys.size, x), ys]))[:, 1]
+    gap = min_gap * fig.dpi / 72
+    order = np.argsort(disp)
+    pos = disp[order].copy()
+    for _ in range(50):                                   # relax: push neighbours apart symmetrically
+        moved = False
+        for i in range(1, pos.size):
+            d = pos[i] - pos[i - 1]
+            if d < gap:
+                sh = (gap - d) / 2
+                pos[i - 1] -= sh; pos[i] += sh; moved = True
+        if not moved:
+            break
+    new = np.empty_like(pos); new[order] = pos
+    inv = ax.transData.inverted()
+    colors = colors or ["0.2"] * len(texts)
+    out = []
+    for yd, t, c in zip(new, texts, colors):
+        yy = inv.transform((ax.transData.transform((x, 0))[0], yd))[1]
+        out.append(ax.annotate(t, (x, yy), xytext=(dx, 0), textcoords="offset points", ha=ha, va="center",
+                               color=c, fontsize=fontsize or _fs(), annotation_clip=False, **kw))
     return out
 
 
@@ -319,7 +360,7 @@ def scale_bar(ax, length, label, loc="lower right", color="w", lw=1.5, pad=0.06,
     else:
         ya = (min(yl) + pad * h) if flip_y else (max(yl) - pad * h)
     ax.plot([xa, xa + length], [ya, ya], color=color, lw=lw, solid_capstyle="butt", zorder=6)
-    up = (not flip_y) == bottom
+    up = bottom                     # label inside the image: above a bar at the bottom, below one at the top
     direct_label(ax, xa + length / 2, ya, label, color=color, dx=0, dy=text_gap if up else -text_gap,
                  ha="center", va="bottom" if up else "top", fontsize=fontsize)
     return ax
@@ -443,10 +484,10 @@ def ecdf(ax, values, color, label=None, lw=None, **kw):
     return ax.step(np.r_[v[0], v], np.r_[0, y], where="post", color=color, lw=lw, label=label, **kw)[0]
 
 
-def ridgeline(ax, x, ys, colors, offset=1.0, scale=1.0, fill="gradient", fill_alpha=0.45, lw=None,
+def ridgeline(ax, x, ys, colors, offset=1.0, scale=1.0, fill="solid", fill_alpha=0.45, lw=None,
               labels_left=None, labels_right=None, label_colors=None, baseline=False, zorder_step=1):
     """Offset stack of curves (spectra, distributions, profiles). Bottom curve = first item.
-    fill: 'gradient' (alpha ramp, house look), 'solid', or None. Returns list of y-offsets."""
+    fill: 'solid' (light tint, default), 'gradient' (alpha ramp), or None. Returns list of y-offsets."""
     lw = lw or mpl.rcParams["lines.linewidth"] * 0.8
     offs = []
     n = len(ys)
@@ -455,9 +496,9 @@ def ridgeline(ax, x, ys, colors, offset=1.0, scale=1.0, fill="gradient", fill_al
         yy = np.asarray(y, float) * scale + off
         z = 10 + (n - i) * zorder_step  # lower curves in front
         if fill == "gradient":
-            gradient_fill(ax, x, yy, color=c, alpha=fill_alpha, ymin=off, zorder=z - 0.5)
+            _ramp_fill(ax, x, yy, color=c, alpha=fill_alpha, ymin=off, zorder=z - 0.5)
         elif fill == "solid":
-            ax.fill_between(x, off, yy, color=lighten(c, 0.6), lw=0, zorder=z - 0.5)
+            ax.fill_between(x, off, yy, color=lighten(c, 1 - fill_alpha), lw=0, zorder=z - 0.5)
         ax.plot(x, yy, color=c, lw=lw, zorder=z)
         if baseline:
             ax.plot([x[0], x[-1]], [off, off], color=c, lw=lw * 0.5, alpha=0.6, zorder=z)
@@ -472,19 +513,21 @@ def ridgeline(ax, x, ys, colors, offset=1.0, scale=1.0, fill="gradient", fill_al
 
 
 # =================================================================================================== comparison
-def bars(ax, x, heights, colors=None, err=None, width=0.62, alpha=1.0, edge=None, points=None, point_color="k",
-         labels=None, label_fmt="{:.2g}", hatch=None, capsize=2.0):
-    """Bars with optional error bars, overlaid individual points and value labels."""
+def bars(ax, x, heights, colors=None, err=None, width=0.62, alpha=1.0, edge="none", points=None, point_color="0.2",
+         labels=None, label_fmt="{:.2g}", hatch=None, capsize=0.0):
+    """Bars (flat fill, no outline by default; edge='auto' for a darker outline) with optional error bars,
+    overlaid individual points and value labels."""
     colors = colors or [HOUSE[0]] * len(heights)
     lw = mpl.rcParams["axes.linewidth"]
     b = ax.bar(x, heights, width=width, color=[mcolors.to_rgba(c, alpha) for c in colors],
-               edgecolor=edge or [darken(c, 0.25) for c in colors], lw=lw, zorder=2, hatch=hatch)
+               edgecolor=[darken(c, 0.25) for c in colors] if edge == "auto" else edge,
+               lw=lw if edge != "none" else 0, zorder=2, hatch=hatch)
     if err is not None:
-        ax.errorbar(x, heights, yerr=err, fmt="none", ecolor="k", elinewidth=lw, capsize=capsize,
+        ax.errorbar(x, heights, yerr=err, fmt="none", ecolor="0.15", elinewidth=lw, capsize=capsize,
                     capthick=lw, zorder=4)
     if points is not None:
         for xi, pts_ in zip(x, points):
-            jitter(ax, xi, pts_, point_color, width=width * 0.25, size=5, alpha=0.7, zorder=5)
+            jitter(ax, xi, pts_, point_color, width=width * 0.22, size=4, alpha=0.55, zorder=5)
     if labels:
         for xi, h in zip(x, heights):
             direct_label(ax, xi, h, label_fmt.format(h), dx=0, dy=2, ha="center", va="bottom")
@@ -538,7 +581,7 @@ def stacked_barh(ax, categories, parts, colors=None, percent=True, label_min=8.0
     return y
 
 
-def lollipop(ax, labels, values, color="0.55", highlight=None, highlight_color="#E84143", sort=True, ms=4.0,
+def lollipop(ax, labels, values, color="0.55", highlight=None, highlight_color="#3A6EA5", sort=True, ms=4.0,
              value_fmt=None, baseline=0.0):
     """Ranked horizontal lollipop (cleaner than bars when there are many categories)."""
     labels = np.asarray(labels); values = np.asarray(values, float)
@@ -557,7 +600,7 @@ def lollipop(ax, labels, values, color="0.55", highlight=None, highlight_color="
     return y
 
 
-def dumbbell(ax, labels, a, b, colors=("#9A9A9A", "#E84143"), names=("before", "after"), ms=4.0, sort=True):
+def dumbbell(ax, labels, a, b, colors=("#B5B5B5", "#3A6EA5"), names=("before", "after"), ms=4.0, sort=True):
     """Paired change per category (before -> after, baseline -> ours)."""
     labels = np.asarray(labels); a = np.asarray(a, float); b = np.asarray(b, float)
     if sort:
@@ -572,8 +615,8 @@ def dumbbell(ax, labels, a, b, colors=("#9A9A9A", "#E84143"), names=("before", "
     return h1, h2
 
 
-def waterfall(ax, labels, deltas, start=None, start_label="Source", end_label="Total", gain_color="#39AF6B",
-              loss_color="#E84143", total_color="#2C6AB4", width=0.62, fmt="{:+.1f}", connector=True, base=0.0):
+def waterfall(ax, labels, deltas, start=None, start_label="Source", end_label="Total", gain_color="#6E9A5E",
+              loss_color="#B8503A", total_color="#3A6EA5", width=0.62, fmt="{:+.1f}", connector=True, base=0.0):
     """Budget / waterfall chart (loss budget in dB, error budget, ablation contributions).
     start: level of the first bar (None -> start at 0, no first bar). Total bars rise from `base`
     (set it below the data, e.g. the axis floor, for log-unit budgets where 0 has no meaning)."""
@@ -695,7 +738,7 @@ def corr_triangle(ax, C, labels, cmap="ns_div_br", annotate=True, fmt="{:.2f}", 
 
 
 # =================================================================================================== relationships
-def parity(ax, y_true, y_pred, color="#2C6AB4", tol=None, lims=None, density=False, s=6, stats=True, units="",
+def parity(ax, y_true, y_pred, color="#3A6EA5", tol=None, lims=None, density=False, s=6, stats=True, units="",
            alpha=0.6, cmap="ns_glacier", stats_loc="upper left"):
     """Predicted vs true with the identity line, optional +-tol band and MAE / RMSE / R^2 text."""
     t = np.asarray(y_true, float); p = np.asarray(y_pred, float)
@@ -768,7 +811,7 @@ def landscape(ax, entries, styles, this_work=None, label_key="ref", number_color
     """Literature comparison ('where does this work sit'): one marker style per category, numbered references
     placed without overlap, shaded target region, highlighted 'this work'.
     entries: list of dicts {x, y, cat, ref}; styles: {cat: dict(marker=..., color=..., label=...)};
-    this_work: dict(x, y, label, marker='*', color='#E84143'); target: (x0, x1, y0, y1) region to shade."""
+    this_work: dict(x, y, label, marker='*', color='#3A6EA5'); target: (x0, x1, y0, y1) region to shade."""
     if target is not None:
         x0, x1, y0, y1 = target
         ax.add_patch(Rectangle((x0, y0), x1 - x0, y1 - y0, color=target_color, lw=0, zorder=0))
@@ -781,7 +824,7 @@ def landscape(ax, entries, styles, this_work=None, label_key="ref", number_color
         handles.setdefault(e["cat"], h)
     if this_work:
         h = ax.plot(this_work["x"], this_work["y"], this_work.get("marker", "*"), ms=this_work.get("ms", ms * 2),
-                    mfc=this_work.get("color", "#E84143"), mec="k", mew=0.6, zorder=5,
+                    mfc=this_work.get("color", "#3A6EA5"), mec="k", mew=0.6, zorder=5,
                     label=this_work.get("label", "This work"))[0]
         handles["__this__"] = h
     texts = [str(e.get(label_key, "")) for e in entries]
@@ -791,6 +834,568 @@ def landscape(ax, entries, styles, this_work=None, label_key="ref", number_color
     leg = ax.legend(handles=list(handles.values()), loc=legend_loc, ncols=legend_ncols, handletextpad=0.3,
                     borderaxespad=0.4, labelspacing=0.3)
     return leg
+
+
+# =================================================================================================== editorial helpers
+# Patterns that recur across recent Nature-family figures: significance brackets and n under categories,
+# mirrored (left/right) bar charts, scenario fans, binned trends, dashed legend boxes, survival curves,
+# volcano and dot-matrix plots, flows between stages, swarms, part-of-whole charts and table figures.
+
+def _ramp_fill(ax, x, y, color, alpha=0.40, ymin=0.0, zorder=1):
+    """Vertical alpha ramp under a curve (transparent at ymin -> alpha at the top)."""
+    x = np.asarray(x, float); y = np.asarray(y, float)
+    grad = np.ones((256, 1, 4)); grad[..., :3] = mcolors.to_rgb(color)
+    grad[:, 0, 3] = np.linspace(0, alpha, 256)
+    im = ax.imshow(grad, aspect="auto", origin="lower", extent=(x.min(), x.max(), ymin, y.max()), zorder=zorder)
+    clip = Polygon(np.column_stack([np.r_[x, x[::-1]], np.r_[y, np.full_like(y, ymin)]]), closed=True,
+                   facecolor="none", edgecolor="none", transform=ax.transData)
+    ax.add_patch(clip)
+    im.set_clip_path(clip)
+    return im
+
+
+def sig_bracket(ax, x0, x1, y, text="***", h=None, color="0.15", lw=None, fontsize=None, vertical=False,
+                text_pad=1.0):
+    """Significance bracket between two categories (x0, x1 at height y, data units) with stars or a P value.
+    vertical=True draws it at x=y between heights x0 and x1 (for curves compared at the right edge)."""
+    lw = lw or mpl.rcParams["axes.linewidth"]
+    fs = fontsize or _fs()
+    if not vertical:
+        h = h if h is not None else 0.02 * np.ptp(ax.get_ylim())
+        ax.plot([x0, x0, x1, x1], [y - h, y, y, y - h], color=color, lw=lw, solid_capstyle="butt",
+                clip_on=False)
+        tr = ax.transData + mtransforms.ScaledTranslation(0, pt(text_pad - (2.0 if "*" in text else 0)),
+                                                          ax.figure.dpi_scale_trans)
+        return ax.text((x0 + x1) / 2, y, text, ha="center", va="bottom", fontsize=fs, color=color,
+                       transform=tr, clip_on=False)
+    h = h if h is not None else 0.012 * np.ptp(ax.get_xlim())
+    ax.plot([y - h, y, y, y - h], [x0, x0, x1, x1], color=color, lw=lw, solid_capstyle="butt", clip_on=False)
+    tr = ax.transData + mtransforms.ScaledTranslation(pt(text_pad), 0, ax.figure.dpi_scale_trans)
+    return ax.text(y, (x0 + x1) / 2, text, ha="left", va="center", rotation=90 if "*" in text else 0,
+                   fontsize=fs, color=color, transform=tr, clip_on=False)
+
+
+def p_to_stars(p):
+    """P value -> '***' (< 0.001), '**' (< 0.01), '*' (< 0.05) or 'NS'."""
+    return "***" if p < 1e-3 else "**" if p < 1e-2 else "*" if p < 0.05 else "NS"
+
+
+def n_ticklabels(ax, labels, ns, axis="x", fmt="n = {:,}"):
+    """Category tick labels with the sample size on a second line ('Group A\\nn = 428')."""
+    lab = [f"{l}\n{fmt.format(n)}" for l, n in zip(labels, ns)]
+    if axis == "x":
+        ax.set_xticklabels(lab)
+    else:
+        ax.set_yticklabels(lab)
+    return lab
+
+
+def butterfly(ax, labels, left, right, colors=None, gap=0.22, height=0.62, fmt="{:,}", separators=(),
+              sep_style=(0, (4, 3)), label_color="0.15", xmax=None, fontsize=None, headers=("Left", "Right"),
+              header_y=None, log=False):
+    """Mirrored horizontal bars: one category per row, labels in the centre column, left values growing to the
+    left and right values to the right, counts written at the bar ends. Draws into a single axes whose x runs
+    from -1 to 1 (bars are scaled to xmax, linear or log). separators: row indices *below* which a dashed rule
+    is drawn (group breaks). Returns the y positions (top row = 0)."""
+    n = len(labels)
+    y = np.arange(n)
+    left = np.asarray(left, float); right = np.asarray(right, float)
+    xmax = xmax or max(left.max(), right.max())
+    fs = fontsize or _fs()
+    if colors is None:
+        colors = ["0.15"] * n
+    elif isinstance(colors, str) or (len(colors) in (3, 4) and not isinstance(colors[0], (str, tuple, list))):
+        colors = [colors] * n
+
+    span = (1 - gap) * 0.82                               # leave room for the count labels
+
+    def scale(v):
+        if log:
+            return span * np.log10(1 + v) / np.log10(1 + xmax)
+        return span * v / xmax
+    for yi, l, r, c in zip(y, left, right, colors):
+        wl, wr = scale(l), scale(r)
+        ax.barh(yi, -wl, left=-gap, height=height, color=c, lw=0)
+        ax.barh(yi, wr, left=gap, height=height, color=c, lw=0)
+        ax.text(-gap - wl - 0.015, yi, fmt.format(int(l)), ha="right", va="center", fontsize=fs, color="0.1")
+        ax.text(gap + wr + 0.015, yi, fmt.format(int(r)), ha="left", va="center", fontsize=fs, color="0.1")
+    for yi, lab in zip(y, labels):
+        ax.text(0, yi, lab, ha="center", va="center", fontsize=fs, color=label_color)
+    for s in separators:
+        ax.axhline(s + 0.5, color="0.25", lw=mpl.rcParams["axes.linewidth"], ls=sep_style)
+    if headers:
+        hy = header_y if header_y is not None else -0.9
+        ax.text(-gap - 0.02, hy, headers[0], ha="right", va="bottom", fontsize=fs)
+        ax.text(gap + 0.02, hy, headers[1], ha="left", va="bottom", fontsize=fs)
+    ax.set_xlim(-1.05, 1.05)
+    ax.set_ylim(n - 0.5, -1.0)
+    ax.axis("off")
+    return y
+
+
+def bracket_label(ax, y0, y1, text, x=1.02, w=0.015, color="0.15", fontsize=None, side="right",
+                  transform="axes_x"):
+    """Square bracket spanning rows y0..y1 (data units) at axes-fraction x, with a label beside it:
+    groups rows of a table-like chart ('Afferent', 'Intrinsic' ...)."""
+    fs = fontsize or _fs()
+    tr = mtransforms.blended_transform_factory(ax.transAxes, ax.transData)
+    sgn = 1 if side == "right" else -1
+    xs = [x, x + sgn * w, x + sgn * w, x]
+    ax.plot(xs, [y0, y0, y1, y1], color=color, lw=mpl.rcParams["axes.linewidth"], transform=tr, clip_on=False)
+    ax.plot([x + sgn * w, x + sgn * 2 * w], [(y0 + y1) / 2] * 2, color=color,
+            lw=mpl.rcParams["axes.linewidth"], transform=tr, clip_on=False)
+    ax.text(x + sgn * 2.6 * w, (y0 + y1) / 2, text, transform=tr, ha="left" if side == "right" else "right",
+            va="center", fontsize=fs, color=color, clip_on=False)
+
+
+def fan(ax, x, center, bands, color, alphas=None, lw=None, label=None, zorder=2, ls="-"):
+    """Scenario fan: central line plus nested percentile bands. bands = [(lo, hi), ...] from the narrowest
+    (e.g. 17-83 %) to the widest (e.g. 5-95 %); each wider band is lighter."""
+    alphas = alphas or [0.32, 0.16, 0.08][:len(bands)]
+    for (lo, hi), a in zip(bands, alphas):
+        ax.fill_between(x, lo, hi, color=color, alpha=a, lw=0, zorder=zorder - 0.5)
+    return ax.plot(x, center, color=color, lw=lw or mpl.rcParams["lines.linewidth"], label=label,
+                   zorder=zorder, ls=ls)[0]
+
+
+def binned_stat(ax, x, y, bins, color="k", err="sem", ms=None, marker="o", line=False, label=None,
+                min_count=3, capsize=0, zorder=3, **kw):
+    """Mean of y in bins of x with s.e.m. (err='sem'), s.d. ('sd') or 95 % CI ('ci') bars: a readable summary
+    of a dense cloud. Returns (centres, means, errors, counts)."""
+    x = np.asarray(x, float); y = np.asarray(y, float)
+    idx = np.digitize(x, bins) - 1
+    c, m, e, n = [], [], [], []
+    for i in range(len(bins) - 1):
+        v = y[idx == i]
+        if v.size < min_count:
+            continue
+        c.append(0.5 * (bins[i] + bins[i + 1])); m.append(v.mean()); n.append(v.size)
+        sd = v.std(ddof=1)
+        e.append(sd if err == "sd" else sd / np.sqrt(v.size) * (1.96 if err == "ci" else 1.0))
+    c, m, e, n = map(np.asarray, (c, m, e, n))
+    ax.errorbar(c, m, yerr=e, fmt=marker + ("-" if line else ""), color=color, ms=ms or mpl.rcParams["lines.markersize"],
+                elinewidth=mpl.rcParams["axes.linewidth"], capsize=capsize, label=label, zorder=zorder,
+                lw=mpl.rcParams["lines.linewidth"] * 0.8, **kw)
+    return c, m, e, n
+
+
+def legend_box(ax, *args, ls=(0, (3, 2)), edgecolor="0.35", lw=None, pad=0.5, **kw):
+    """Legend inside a dashed rectangle (the 'key box' used for experiment-vs-model plots)."""
+    kw.setdefault("frameon", True)
+    kw.setdefault("borderpad", pad)
+    kw.setdefault("fancybox", False)
+    leg = ax.legend(*args, **kw)
+    fr = leg.get_frame()
+    fr.set_edgecolor(edgecolor); fr.set_linestyle(ls); fr.set_linewidth(lw or mpl.rcParams["axes.linewidth"])
+    fr.set_facecolor("white"); fr.set_alpha(1.0)
+    return leg
+
+
+def dashed_frame(ax, x0, y0, x1, y1, color="0.35", ls=(0, (3, 2)), lw=None, transform=None, zorder=5, fill="white"):
+    """Dashed rectangle (axes fraction by default) to box an inset, a key or a group of items."""
+    tr = transform or ax.transAxes
+    r = Rectangle((x0, y0), x1 - x0, y1 - y0, transform=tr, fill=fill is not None, facecolor=fill or "none",
+                  edgecolor=color, ls=ls, lw=lw or mpl.rcParams["axes.linewidth"], zorder=zorder, clip_on=False)
+    ax.add_patch(r)
+    return r
+
+
+def arrow_note(ax, x, y_from, y_to, text, color="0.2", fontsize=None, lw=None, va="bottom", text_pad=1.0):
+    """Vertical arrow from y_from down (or up) to y_to at x with a label above its tail (cost / time notes on
+    a curve). Works on log axes (positions in data units)."""
+    lw = lw or mpl.rcParams["axes.linewidth"]
+    ax.annotate("", xy=(x, y_to), xytext=(x, y_from),
+                arrowprops=dict(arrowstyle="-|>", lw=lw, color=color, mutation_scale=5, shrinkA=0, shrinkB=1))
+    tr = ax.transData + mtransforms.ScaledTranslation(0, pt(text_pad), ax.figure.dpi_scale_trans)
+    return ax.text(x, y_from, text, ha="center", va=va, fontsize=fontsize or _fs(), color=color, transform=tr)
+
+
+def kaplan_meier(t, event):
+    """Kaplan-Meier estimate. t: times, event: 1 = event, 0 = censored.
+    Returns (times, survival, lower95, upper95, censor_times, censor_surv) with Greenwood log-log CI."""
+    t = np.asarray(t, float); e = np.asarray(event, int)
+    order = np.argsort(t); t, e = t[order], e[order]
+    uniq = np.unique(t[e == 1])
+    s, var_acc, ts, ss, lo, hi = 1.0, 0.0, [0.0], [1.0], [1.0], [1.0]
+    for u in uniq:
+        n_at = np.sum(t >= u); d = np.sum((t == u) & (e == 1))
+        s *= 1 - d / n_at
+        if n_at > d:
+            var_acc += d / (n_at * (n_at - d))
+        ts.append(u); ss.append(s)
+        if 0 < s < 1:
+            se = np.sqrt(var_acc) / abs(np.log(s))
+            lo.append(s ** np.exp(1.96 * se)); hi.append(s ** np.exp(-1.96 * se))
+        else:
+            lo.append(s); hi.append(s)
+    ts, ss = np.array(ts), np.array(ss)
+    ct = t[e == 0]
+    cs = np.array([ss[np.searchsorted(ts, c, side="right") - 1] for c in ct])
+    return ts, ss, np.array(lo), np.array(hi), ct, cs
+
+
+def km_curve(ax, t, event, color, label=None, ci=True, censor=True, lw=None, ci_alpha=0.15, tick_h=0.018):
+    """Kaplan-Meier survival step curve with log-log 95 % CI band and '|' ticks at censoring times."""
+    ts, ss, lo, hi, ct, cs = kaplan_meier(t, event)
+    tmax = np.max(t)
+    ts_ = np.r_[ts, tmax]; ss_ = np.r_[ss, ss[-1]]
+    ln = ax.step(ts_, ss_, where="post", color=color, lw=lw or mpl.rcParams["lines.linewidth"], label=label,
+                 zorder=3)[0]
+    if ci:
+        ax.fill_between(np.r_[ts, tmax], np.r_[lo, lo[-1]], np.r_[hi, hi[-1]], step="post", color=color,
+                        alpha=ci_alpha, lw=0, zorder=1)
+    if censor and ct.size:
+        ax.vlines(ct, cs - tick_h, cs + tick_h, color=color, lw=mpl.rcParams["axes.linewidth"], zorder=4)
+    return ln
+
+
+def at_risk_table(ax, groups, times, labels, colors, row_h=0.11, y0=-0.30, title="No. at risk", fontsize=None):
+    """Numbers at risk under a survival plot (placed in axes-fraction rows below the x axis).
+    groups = [(t, event), ...] in the same order as labels/colors; times = x positions of the columns."""
+    fs = fontsize or _fs()
+    tr = mtransforms.blended_transform_factory(ax.transData, ax.transAxes)
+    tl = mtransforms.blended_transform_factory(ax.transAxes, ax.transAxes)
+    ax.text(-0.09, y0 + row_h * 0.9, title, transform=tl, ha="right", va="center", fontsize=fs, color="0.2")
+    for i, ((t, _), lab, c) in enumerate(zip(groups, labels, colors)):
+        yy = y0 - i * row_h
+        ax.text(-0.09, yy, lab, transform=tl, ha="right", va="center", fontsize=fs, color=c)
+        t = np.asarray(t, float)
+        for x in times:
+            ax.text(x, yy, f"{int(np.sum(t >= x)):,}", transform=tr, ha="center", va="center", fontsize=fs,
+                    color="0.1")
+
+
+def volcano(ax, effect, pval, effect_thr=1.0, p_thr=0.05, colors=None, s=4, names=None, label_top=0,
+            label_fontsize=None, alpha=0.85, thr_style=(0, (3, 2))):
+    """Volcano plot: effect size vs -log10 P. Points beyond both thresholds coloured up/down, the rest grey;
+    dashed threshold lines; the label_top most significant hits labelled from *names*.
+    Returns boolean masks (up, down)."""
+    colors = colors or ["#B8503A", "#3A6EA5", "#C8C8C8"]
+    e = np.asarray(effect, float); q = -np.log10(np.asarray(pval, float))
+    up = (e >= effect_thr) & (q >= -np.log10(p_thr))
+    dn = (e <= -effect_thr) & (q >= -np.log10(p_thr))
+    ns = ~(up | dn)
+    ax.scatter(e[ns], q[ns], s=s, color=colors[2], lw=0, zorder=1, rasterized=True)
+    ax.scatter(e[up], q[up], s=s * 1.3, color=colors[0], lw=0, alpha=alpha, zorder=2)
+    ax.scatter(e[dn], q[dn], s=s * 1.3, color=colors[1], lw=0, alpha=alpha, zorder=2)
+    lw = mpl.rcParams["axes.linewidth"]
+    for v in (-effect_thr, effect_thr):
+        ax.axvline(v, color="0.45", ls=thr_style, lw=lw, zorder=0)
+    ax.axhline(-np.log10(p_thr), color="0.45", ls=thr_style, lw=lw, zorder=0)
+    if label_top and names is not None:
+        sig = np.where(up | dn)[0]
+        top = sig[np.argsort(-(q[sig] * np.abs(e[sig])))][:label_top]
+        place_labels(ax, e[top], q[top], [names[i] for i in top], fontsize=label_fontsize,
+                     colors=[colors[0] if e[i] > 0 else colors[1] for i in top])
+    return up, dn
+
+
+def dot_matrix(ax, frac, value, xlabels, ylabels, cmap="ns_purples", smax=38.0, vmin=None, vmax=None,
+               rotate=90, edge="0.35", min_frac=0.0):
+    """Dot plot matrix: dot area = fraction (0-1), dot colour = value. frac/value shape (n_rows, n_cols).
+    Rows read top to bottom in ylabels order. Returns the PathCollection (pass to a colour bar)."""
+    frac = np.asarray(frac, float); value = np.asarray(value, float)
+    nr, nc = frac.shape
+    X, Y = np.meshgrid(np.arange(nc), np.arange(nr))
+    m = frac.ravel() > min_frac
+    sc = ax.scatter(X.ravel()[m], Y.ravel()[m], s=smax * frac.ravel()[m], c=value.ravel()[m], cmap=cmap,
+                    vmin=vmin, vmax=vmax, edgecolors=edge, linewidths=0.3, zorder=3)
+    ax.set_xticks(np.arange(nc), xlabels, rotation=rotate, ha="center" if rotate in (0, 90) else "right")
+    ax.set_yticks(np.arange(nr), ylabels)
+    ax.set_xlim(-0.6, nc - 0.4); ax.set_ylim(nr - 0.4, -0.6)
+    ax.tick_params(length=0)
+    for sp in ax.spines.values():
+        sp.set_visible(False)
+    return sc
+
+
+def size_legend(ax, values, sizes, title=None, color="0.55", edge="0.35", loc="upper left", bbox=None,
+                fmt="{:g}", ncols=1, **kw):
+    """Legend for marker area (scatter s=) -- one entry per value."""
+    hs = [ax.scatter([], [], s=s, color=color, edgecolors=edge, linewidths=0.3) for s in sizes]
+    kw.setdefault("handletextpad", 0.2)
+    kw.setdefault("labelspacing", 0.6)
+    kw.setdefault("borderpad", 0.2)
+    leg = ax.legend(hs, [fmt.format(v) for v in values], title=title, loc=loc, bbox_to_anchor=bbox, ncols=ncols,
+                    title_fontsize=_fs(), **kw)
+    leg._legend_box.align = "left"
+    return leg
+
+
+def _band_path(x0, x1, y0a, y0b, y1a, y1b, curv=0.5):
+    """Closed path of a flow ribbon from [y0a, y0b] at x0 to [y1a, y1b] at x1 (cubic Bezier edges)."""
+    from matplotlib.path import Path as MPath
+    dx = (x1 - x0) * curv
+    verts = [(x0, y0a), (x0 + dx, y0a), (x1 - dx, y1a), (x1, y1a), (x1, y1b),
+             (x1 - dx, y1b), (x0 + dx, y0b), (x0, y0b), (x0, y0a)]
+    codes = [MPath.MOVETO, MPath.CURVE4, MPath.CURVE4, MPath.CURVE4, MPath.LINETO,
+             MPath.CURVE4, MPath.CURVE4, MPath.CURVE4, MPath.CLOSEPOLY]
+    return MPath(verts, codes)
+
+
+def alluvial(ax, stages, flows, colors, node_w=0.05, gap=0.03, flow_alpha=0.38, color_by="source",
+             label_fmt="{name}", fontsize=None, stage_titles=None):
+    """Alluvial (Sankey-like) diagram between consecutive stages.
+    stages: [[names of stage 0], [names of stage 1], ...]; flows: list of 2-D arrays, flows[k][i, j] = amount
+    from item i of stage k to item j of stage k+1; colors: {name: colour} for every item.
+    Nodes are bars whose heights are proportional to their totals (one scale for all stages); ribbons keep the
+    source (color_by='source') or target colour. label_fmt may use {name} and {value}."""
+    from matplotlib.patches import PathPatch
+    fs = fontsize or _fs()
+    flows = [np.asarray(f, float) for f in flows]
+    ns = len(stages)
+    xs = np.linspace(0, 1, ns)
+    totals = [flows[k].sum(axis=1) if k < ns - 1 else flows[k - 1].sum(axis=0) for k in range(ns)]
+    nmax = max(len(n) for n in stages)
+    scale = (1 - gap * (nmax - 1)) / max(t.sum() for t in totals)
+    nodes = []
+    for k, names in enumerate(stages):
+        used = totals[k].sum() * scale + gap * (len(names) - 1)
+        y = 1 - (1 - used) / 2
+        pos = []
+        for i, nm in enumerate(names):
+            h = totals[k][i] * scale
+            pos.append((y - h, y))
+            ax.add_patch(Rectangle((xs[k] - node_w / 2, y - h), node_w, h, color=colors[nm], lw=0, zorder=3))
+            txt = label_fmt.format(name=nm, value=totals[k][i])
+            if k == 0:
+                ax.text(xs[k] - node_w / 2 - 0.012, y - h / 2, txt, ha="right", va="center", fontsize=fs)
+            elif k == ns - 1:
+                ax.text(xs[k] + node_w / 2 + 0.012, y - h / 2, txt, ha="left", va="center", fontsize=fs)
+            else:
+                ax.text(xs[k] + node_w / 2 + 0.008, y - h / 2, txt, ha="left", va="center", fontsize=fs,
+                        bbox=dict(boxstyle="square,pad=0.1", fc="white", ec="none", alpha=0.7), zorder=4)
+            y -= h + gap
+        nodes.append(pos)
+    for k in range(ns - 1):
+        F = flows[k]
+        out_c = [p[1] for p in nodes[k]]
+        in_c = [p[1] for p in nodes[k + 1]]
+        for i in range(F.shape[0]):
+            for j in range(F.shape[1]):
+                if F[i, j] <= 0:
+                    continue
+                h = F[i, j] * scale
+                path = _band_path(xs[k] + node_w / 2, xs[k + 1] - node_w / 2, out_c[i], out_c[i] - h,
+                                  in_c[j], in_c[j] - h)
+                c = colors[stages[k][i]] if color_by == "source" else colors[stages[k + 1][j]]
+                ax.add_patch(PathPatch(path, facecolor=c, alpha=flow_alpha, lw=0, zorder=2))
+                out_c[i] -= h; in_c[j] -= h
+    if stage_titles:
+        for x, t in zip(xs, stage_titles):
+            ax.text(x, 1.03, t, ha="center", va="bottom", fontsize=mpl.rcParams["axes.labelsize"])
+    ax.set_xlim(-0.02, 1.02); ax.set_ylim(-0.02, 1.08)
+    ax.axis("off")
+    return nodes
+
+
+def beeswarm_x(values, x=0.0, width=0.35, size_pt=3.0, ax=None, nbins=None):
+    """x positions of a simple beeswarm: points binned along y, each bin spread symmetrically around x and
+    squeezed to *width*. Returns an array of x."""
+    v = np.asarray(values, float)
+    nb = nbins or max(8, int(np.sqrt(v.size) * 2.2))
+    edges = np.linspace(v.min(), v.max() + 1e-12, nb + 1)
+    idx = np.clip(np.digitize(v, edges) - 1, 0, nb - 1)
+    xs = np.zeros_like(v)
+    counts = np.bincount(idx, minlength=nb)
+    step = width / max(1, counts.max() / 2)
+    for b in range(nb):
+        ii = np.where(idx == b)[0]
+        ii = ii[np.argsort(v[ii])]
+        k = np.arange(ii.size)
+        off = ((k + 1) // 2) * np.where(k % 2 == 0, 1, -1) * step
+        if ii.size % 2 == 0:
+            off = off + step / 2
+        xs[ii] = x + np.clip(off, -width, width)
+    return xs
+
+
+def beeswarm(ax, x, values, color, width=0.32, s=6, alpha=0.9, edge=None, zorder=3, **kw):
+    """Beeswarm (non-overlapping strip): every observation visible, the distribution shape kept."""
+    xs = beeswarm_x(values, x, width)
+    return ax.scatter(xs, values, s=s, color=color, alpha=alpha, edgecolors=edge or "none",
+                      linewidths=0.3 if edge else 0, zorder=zorder, **kw)
+
+
+def paired_lines(ax, x0, x1, a, b, color="0.65", lw=0.5, alpha=0.7, ms=0, zorder=1):
+    """Thin lines joining paired observations (same subject before / after)."""
+    for ai, bi in zip(a, b):
+        ax.plot([x0, x1], [ai, bi], color=color, lw=lw, alpha=alpha, zorder=zorder, marker="o" if ms else None,
+                ms=ms)
+
+
+def donut(ax, values, colors, labels=None, width=0.34, start=90, center_text=None, label_pct=True,
+          pct_min=4.0, fontsize=None, counterclock=False, label_dist=1.16):
+    """Donut chart (part of a whole, <= 6 parts). Labels outside with percentages; optional centre text."""
+    fs = fontsize or _fs()
+    v = np.asarray(values, float)
+    wedges, _ = ax.pie(v, colors=colors, startangle=start, counterclock=counterclock,
+                       wedgeprops=dict(width=width, edgecolor="white", linewidth=0.8))
+    tot = v.sum()
+    for w, val, lab in zip(wedges, v, labels or [None] * len(v)):
+        ang = np.deg2rad((w.theta1 + w.theta2) / 2)
+        pct = 100 * val / tot
+        if lab is None and not label_pct:
+            continue
+        txt = (lab + ("\n" if lab else "") if lab else "") + (f"{pct:.0f}%" if label_pct and pct >= pct_min else "")
+        ax.text(label_dist * np.cos(ang), label_dist * np.sin(ang), txt, ha="center", va="center", fontsize=fs)
+    if center_text:
+        ax.text(0, 0, center_text, ha="center", va="center", fontsize=mpl.rcParams["axes.labelsize"])
+    ax.set_aspect("equal")
+    return wedges
+
+
+def waffle(ax, counts, colors, ncols=10, nrows=10, gap=0.12, labels=None, legend=True):
+    """Waffle chart: ncols x nrows squares filled in order of *counts* (counts should sum to ncols*nrows)."""
+    cells = []
+    for i, c in enumerate(counts):
+        cells += [i] * int(c)
+    cells += [-1] * (ncols * nrows - len(cells))
+    for k, ci in enumerate(cells[:ncols * nrows]):
+        r, cc = divmod(k, ncols)
+        ax.add_patch(Rectangle((cc, nrows - 1 - r), 1 - gap, 1 - gap,
+                               color=colors[ci] if ci >= 0 else "0.92", lw=0))
+    ax.set_xlim(-0.2, ncols); ax.set_ylim(-0.2, nrows); ax.set_aspect("equal"); ax.axis("off")
+    if legend and labels:
+        hs = [Rectangle((0, 0), 1, 1, color=c) for c in colors[:len(labels)]]
+        ax.legend(hs, labels, loc="upper left", bbox_to_anchor=(1.0, 1.0), handlelength=0.8, handleheight=0.8)
+
+
+def zebra_table(ax, cells, col_labels, col_x, col_ha=None, stripe="0.93", row_h=1.0, header_lines=True,
+                colors=None, fontsize=None, group_breaks=(), bold_header=False):
+    """Table figure: text cells on alternating light stripes, header row with rules, optional double rule at
+    group breaks (row indices below which a break is drawn). cells[r][c] strings; colors[r][c] text colours.
+    col_x: x centre (or left edge) of each column in axes fraction. Returns the axes."""
+    fs = fontsize or _fs("label")
+    nr = len(cells)
+    col_ha = col_ha or ["center"] * len(col_labels)
+    ax.set_xlim(0, 1); ax.set_ylim(nr + 0.2, -2.3)
+    for r in range(nr):
+        if r % 2 == 1:
+            ax.add_patch(Rectangle((0, r - 0.5), 1, row_h, color=stripe, lw=0, zorder=0))
+        for c, txt in enumerate(cells[r]):
+            ax.text(col_x[c], r, txt, ha=col_ha[c], va="center", fontsize=fs,
+                    color=(colors[r][c] if colors else "0.1"), zorder=2)
+    for c, lab in enumerate(col_labels):
+        ax.text(col_x[c], -1.25, lab, ha=col_ha[c], va="center", fontsize=fs, zorder=2,
+                fontweight="bold" if bold_header else "normal", linespacing=1.1)
+    lw = mpl.rcParams["axes.linewidth"]
+    if header_lines:
+        ax.axhline(-2.2, color="0.1", lw=lw); ax.axhline(-0.5, color="0.1", lw=lw * 0.8)
+        ax.axhline(nr - 0.5, color="0.1", lw=lw)
+    for g in group_breaks:
+        ax.axhline(g + 0.5 - 0.06, color="0.1", lw=lw * 0.6); ax.axhline(g + 0.5 + 0.06, color="0.1", lw=lw * 0.6)
+    ax.axis("off")
+    return ax
+
+
+def zoom_to(ax, ax_zoom, xlim, ylim, color="0.1", lw=None, corners=("upper", "lower")):
+    """Mark a region of *ax* with a rectangle and connect two of its corners to *ax_zoom* (which shows the same
+    data at xlim/ylim): the 'magnified region' layout with the enlarged panel beside the main one."""
+    from matplotlib.patches import ConnectionPatch
+    lw = lw or mpl.rcParams["axes.linewidth"]
+    ax.add_patch(Rectangle((xlim[0], ylim[0]), xlim[1] - xlim[0], ylim[1] - ylim[0], fill=False,
+                           edgecolor=color, lw=lw, zorder=6))
+    ax_zoom.set_xlim(xlim); ax_zoom.set_ylim(ylim)
+    for sp in ax_zoom.spines.values():
+        sp.set_visible(True); sp.set_linewidth(lw); sp.set_edgecolor(color)
+    for (xa, ya), (xb, yb) in (((xlim[0], ylim[1]), (0, 1)), ((xlim[0], ylim[0]), (0, 0))):
+        con = ConnectionPatch(xyA=(xa, ya), coordsA=ax.transData, xyB=(xb, yb), coordsB=ax_zoom.transAxes,
+                              color=color, lw=lw * 0.8)
+        ax.figure.add_artist(con)
+    return ax_zoom
+
+
+def highlight_points(ax, x, y, mask, labels=None, base_color="#B8503A", hl_color=None, s=10, hl_s=26,
+                     edge="0.05", fontsize=None, offsets=None):
+    """Scatter where a subset is emphasised by a larger, black-edged marker and labelled (all others plain)."""
+    x = np.asarray(x, float); y = np.asarray(y, float); mask = np.asarray(mask, bool)
+    ax.scatter(x[~mask], y[~mask], s=s, color=base_color, lw=0, zorder=2)
+    ax.scatter(x[mask], y[mask], s=hl_s, color=hl_color or base_color, edgecolors=edge, linewidths=0.8, zorder=3)
+    if labels is not None:
+        place_labels(ax, x[mask], y[mask], labels, fontsize=fontsize, offsets=offsets)
+
+
+def node_link(ax, pos, sizes, edges, edge_w, node_colors, size_scale=1.0, edge_color="0.25", curved=0.0,
+              labels=None, label_offset=(0, 0), fontsize=None, edge_alpha=0.9, wmax=2.2):
+    """Node-link diagram. pos {node: (x, y)}, sizes {node: value} -> marker area, edges [(a, b)],
+    edge_w [weights] -> line width (scaled to wmax pt). Draw order: edges, then nodes."""
+    from matplotlib.patches import FancyArrowPatch as FAP
+    w = np.asarray(edge_w, float)
+    lw = 0.3 + (wmax - 0.3) * (w - w.min()) / max(1e-12, np.ptp(w))
+    for (a, b), l in zip(edges, lw):
+        p = FAP(pos[a], pos[b], connectionstyle=f"arc3,rad={curved}", arrowstyle="-", lw=l, color=edge_color,
+                alpha=edge_alpha, zorder=1, shrinkA=0, shrinkB=0)
+        ax.add_patch(p)
+    for nd, (x, y) in pos.items():
+        ax.scatter([x], [y], s=sizes[nd] * size_scale, color=node_colors[nd], edgecolors="white", linewidths=0.5,
+                   zorder=3)
+        if labels and nd in labels:
+            ax.annotate(labels[nd], (x, y), xytext=label_offset, textcoords="offset points", ha="center",
+                        va="center", fontsize=fontsize or _fs(), zorder=4)
+    ax.set_aspect("equal"); ax.axis("off")
+
+
+def hill(x, bottom, top, ec50, n):
+    """Four-parameter logistic (Hill) dose-response curve."""
+    return bottom + (top - bottom) / (1 + (ec50 / np.asarray(x, float)) ** n)
+
+
+def fit_hill(x, y, p0=None):
+    """Least-squares fit of hill() (scipy). Returns (bottom, top, ec50, n)."""
+    from scipy.optimize import curve_fit
+    x = np.asarray(x, float); y = np.asarray(y, float)
+    p0 = p0 or [y.min(), y.max(), np.exp(np.mean(np.log(x))), 1.0]
+    p, _ = curve_fit(hill, x, y, p0=p0, maxfev=20000)
+    return p
+
+
+def mean_sem(ax, x, data, color, marker="o", ms=None, label=None, lw=None, line=True, capsize=0, mfc=None,
+             zorder=3, **kw):
+    """Mean +- s.e.m. per x for repeated measurements data[i] (list of replicate arrays)."""
+    m = np.array([np.mean(d) for d in data]); e = np.array([np.std(d, ddof=1) / np.sqrt(len(d)) for d in data])
+    ax.errorbar(x, m, yerr=e, fmt=marker + ("-" if line else ""), color=color, ms=ms or mpl.rcParams["lines.markersize"],
+                lw=lw or mpl.rcParams["lines.linewidth"], elinewidth=mpl.rcParams["axes.linewidth"], capsize=capsize,
+                mfc=mfc or color, label=label, zorder=zorder, **kw)
+    return m, e
+
+
+def overlay_bars(ax, x, front, back, colors, labels=None, width=0.8, log=False):
+    """Two bar series drawn on top of each other at the same x (back = total, front = subset), e.g. a reference
+    set inside a larger new set. Works on a log axis (bars start at the axis bottom)."""
+    b0 = ax.bar(x, back, width=width, color=colors[0], lw=0, zorder=2, label=labels[0] if labels else None)
+    b1 = ax.bar(x, front, width=width, color=colors[1], zorder=3, label=labels[1] if labels else None,
+                edgecolor="white", linewidth=0.6)
+    if log:
+        ax.set_yscale("log")
+    return b0, b1
+
+
+def square_legend(ax, labels, colors, loc="upper left", bbox=None, ncols=1, size=0.8, **kw):
+    """Legend with small square colour patches (the usual key for bars and areas)."""
+    hs = [Rectangle((0, 0), 1, 1, color=c, lw=0) for c in colors]
+    return ax.legend(hs, labels, loc=loc, bbox_to_anchor=bbox, ncols=ncols, handlelength=size, handleheight=size,
+                     **kw)
+
+
+def area_stack(ax, x, ys, colors, labels=None, alpha=1.0, edge="white", lw=0.4, direct=True, fontsize=None,
+               label_x=None):
+    """Stacked areas (composition over time) with thin white separators and optional direct labels placed in
+    the middle of each layer at label_x (default: 85 % along x)."""
+    ys = np.asarray(ys, float)
+    cum = np.cumsum(ys, axis=0)
+    base = np.zeros_like(cum[0])
+    for i, (top, c) in enumerate(zip(cum, colors)):
+        ax.fill_between(x, base, top, color=c, alpha=alpha, lw=0, zorder=1)
+        ax.plot(x, top, color=edge, lw=lw, zorder=2)
+        if direct and labels:
+            xi = label_x if label_x is not None else x[0] + 0.85 * (x[-1] - x[0])
+            k = np.argmin(np.abs(np.asarray(x) - xi))
+            if top[k] - base[k] > 0.04 * cum[-1].max():
+                ax.text(x[k], (top[k] + base[k]) / 2, labels[i], ha="center", va="center",
+                        fontsize=fontsize or _fs(), color="white" if sum(mcolors.to_rgb(c)) < 1.6 else "0.1")
+        base = top
+    return cum
 
 
 # =================================================================================================== export

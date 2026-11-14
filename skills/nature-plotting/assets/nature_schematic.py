@@ -33,7 +33,9 @@ __all__ = [
     "lens", "objective", "beamsplitter", "mirror", "nd_filter", "fiber", "fiber_coil", "camera",
     "random_field", "periodic_field", "region_topview", "layer_stack", "dimension", "iso", "iso_block", "nn_diagram",
     "conv_blocks", "matrix_icon", "mini_plot", "image_icon", "concept_axes", "brace", "zoom_connector",
-    "LINE", "FILL", "EDGE",
+    "LINE", "FILL", "EDGE", "PASTEL", "pastel", "group_frame", "pbox", "cylinder", "circle_node", "plus_node",
+    "route", "chevrons", "cycle_diagram", "icon_graph", "icon_stack", "icon_bars", "icon_person", "icon_cells",
+    "timeline",
 ]
 
 LINE = "0.2"          # default stroke for diagram lines
@@ -355,7 +357,7 @@ def nn_diagram(ax, x, y, w, h, layers=(6, 9, 9, 7, 5), colors=None, edge_color="
                zorder=3):
     """Fully-connected network sketch: columns of nodes joined by thin grey edges."""
     n = len(layers)
-    colors = colors or ([PALETTE["skyblue"]] + ["#B5B5B5"] * (n - 2) + [PALETTE["red"]])
+    colors = colors or (["#9DBCDD"] + ["#C4C4C4"] * (n - 2) + ["#D08C34"])
     xs = np.linspace(x, x + w, n)
     node_r = node_r or min(w / (n * 6), h / (max(layers) * 2.6))
     cols = []
@@ -379,7 +381,7 @@ def conv_blocks(ax, x, y, specs, gap=2.0, depth_scale=0.5, ec="0.3", label_size=
     boxes = []
     for sp in specs:
         w, h, d = sp["w"], sp["h"], sp.get("d", 2.0)
-        c = sp.get("color", "#8EA9CC")
+        c = sp.get("color", "#9DBCDD")
         dx, dy = d * depth_scale, d * depth_scale
         y0 = y + (max(s["h"] for s in specs) - h) / 2
         front = Rectangle((cx, y0), w, h, fc=c, ec=ec, lw=_lw(0.5), zorder=3)
@@ -418,7 +420,7 @@ def matrix_icon(ax, x, y, w, h, data=None, cmap="magma", grid_color="w", grid_lw
     return Box(x, y, w, h)
 
 
-def mini_plot(ax, x, y, w, h, xdata, ydata, color="#E84143", fill=True, ls="-", lw=None, frame=True, ticks=3,
+def mini_plot(ax, x, y, w, h, xdata, ydata, color="#3A6EA5", fill=True, ls="-", lw=None, frame=True, ticks=3,
               ylim=None, zorder=3):
     """Framed miniature plot inside a diagram (curve icons). Data are mapped into the box."""
     xd = np.asarray(xdata, float); yd = np.asarray(ydata, float)
@@ -498,3 +500,234 @@ def zoom_connector(fig, ax_src, xy0_src, xy1_src, ax_dst, color="0.4", ls=(0, (3
         con = ConnectionPatch(xyA=p, coordsA=ax_src.transData, xyB=dst.get(c, c), coordsB=ax_dst.transAxes,
                               color=color, lw=lw, ls=ls)
         fig.add_artist(con)
+
+
+# ------------------------------------------------------------------------------------------------- pipeline diagrams
+# Pastel fill / edge pairs for block diagrams: one colour per stage or module family, never more than four.
+PASTEL = {
+    "blue": ("#EAF0F8", "#7C9CC6"), "green": ("#E8F3EC", "#7FB394"), "orange": ("#FBF0E2", "#D3A066"),
+    "purple": ("#F0ECF7", "#9C8BC4"), "grey": ("#F3F3F3", "#A3A3A3"), "rose": ("#F8EBEE", "#C98E9C"),
+    "teal": ("#E5F2F1", "#6FAAA3"),
+}
+
+
+def pastel(name):
+    """(fill, edge) pair from PASTEL."""
+    return PASTEL[name]
+
+
+def group_frame(ax, x, y, w, h, title=None, color="blue", r=1.6, lw=None, title_side="top", fill="white",
+                ls="-", zorder=1, title_size=1.05):
+    """Rounded frame around a group of boxes (a pipeline, a module), coloured edge, title centred above it."""
+    ec = PASTEL[color][1] if color in PASTEL else color
+    ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle=f"round,pad=0,rounding_size={r}", fc=fill, ec=ec,
+                                lw=lw or _lw(1.0), ls=ls, zorder=zorder))
+    if title:
+        ty = y + h + 0.9 if title_side == "top" else y - 0.9
+        ax.text(x + w / 2, ty, title, ha="center", va="bottom" if title_side == "top" else "top",
+                fontsize=_fs(title_size), zorder=zorder + 1)
+    return Box(x, y, w, h)
+
+
+def pbox(ax, x, y, w, h, text=None, color="grey", sub=None, r=0.8, bold=False, fontsize=None, zorder=2, ls="-"):
+    """Pastel module box: box() with fill/edge from PASTEL[color]."""
+    fc, ec = PASTEL[color]
+    return box(ax, x, y, w, h, text=text, sub=sub, fc=fc, ec=ec, r=r, bold=bold, fontsize=fontsize, zorder=zorder,
+               ls=ls)
+
+
+def cylinder(ax, x, y, w, h, text=None, fc="#F3F3F3", ec="0.45", lw=None, cap=0.18, fontsize=None, zorder=3):
+    """Database / storage icon: a cylinder with elliptical caps. (x, y) = bottom-left of the body."""
+    lw = lw or _lw(0.8)
+    ch = h * cap
+    ax.add_patch(Rectangle((x, y + ch / 2), w, h - ch, fc=fc, ec="none", zorder=zorder))
+    ax.plot([x, x], [y + ch / 2, y + h - ch / 2], color=ec, lw=lw, zorder=zorder + 0.2)
+    ax.plot([x + w, x + w], [y + ch / 2, y + h - ch / 2], color=ec, lw=lw, zorder=zorder + 0.2)
+    ax.add_patch(Ellipse((x + w / 2, y + ch / 2), w, ch, fc=fc, ec=ec, lw=lw, zorder=zorder - 0.1))
+    ax.add_patch(Rectangle((x, y + ch / 2), w, ch / 2, fc=fc, ec="none", zorder=zorder))
+    ax.add_patch(Ellipse((x + w / 2, y + h - ch / 2), w, ch, fc=lighten(fc, 0.3), ec=ec, lw=lw, zorder=zorder + 0.3))
+    if text:
+        ax.text(x + w / 2, y + (h - ch) / 2, text, ha="center", va="center", fontsize=fontsize or _fs(1.0),
+                zorder=zorder + 0.5, linespacing=1.1)
+    return Box(x, y, w, h)
+
+
+def circle_node(ax, x, y, r=1.6, text=None, fc="white", ec="0.3", lw=None, fontsize=None, zorder=3):
+    """Circle node (junction, merge point, state). Returns a Box around it for anchors."""
+    ax.add_patch(Circle((x, y), r, fc=fc, ec=ec, lw=lw or _lw(0.8), zorder=zorder))
+    if text:
+        ax.text(x, y, text, ha="center", va="center", fontsize=fontsize or _fs(1.0), zorder=zorder + 1)
+    return Box(x - r, y - r, 2 * r, 2 * r)
+
+
+def plus_node(ax, x, y, r=1.0, ec="0.3", lw=None, zorder=4):
+    """Small circled plus (residual addition / sum junction)."""
+    circle_node(ax, x, y, r, ec=ec, lw=lw, zorder=zorder)
+    k = r * 0.55
+    ax.plot([x - k, x + k], [y, y], color=ec, lw=lw or _lw(0.7), zorder=zorder + 1)
+    ax.plot([x, x], [y - k, y + k], color=ec, lw=lw or _lw(0.7), zorder=zorder + 1)
+    return Box(x - r, y - r, 2 * r, 2 * r)
+
+
+def route(ax, points, color=LINE, lw=None, dashed=False, arrow_end=True, head=4.5, radius=0.0, zorder=3,
+          label_text=None, label_at=0.5, label_side="below", label_color=None):
+    """Orthogonal connector through *points* (mm) with optional dashed style, rounded corners (radius, mm),
+    arrow head and a label on its longest segment (feedback loops such as 'Repeat for 5 rounds')."""
+    pts = np.asarray(points, float)
+    if radius > 0 and len(pts) > 2:
+        verts, codes = [tuple(pts[0])], [MPath.MOVETO]
+        for i in range(1, len(pts) - 1):
+            p0, p1, p2 = pts[i - 1], pts[i], pts[i + 1]
+            d0 = (p1 - p0) / max(np.linalg.norm(p1 - p0), 1e-9); d1 = (p2 - p1) / max(np.linalg.norm(p2 - p1), 1e-9)
+            verts += [tuple(p1 - d0 * radius), tuple(p1), tuple(p1 + d1 * radius)]
+            codes += [MPath.LINETO, MPath.CURVE3, MPath.CURVE3]
+        stop = pts[-1] if not arrow_end else pts[-1] - (pts[-1] - pts[-2]) / max(np.linalg.norm(pts[-1] - pts[-2]), 1e-9) * 0.01
+        verts.append(tuple(stop)); codes.append(MPath.LINETO)
+        ax.add_patch(PathPatch(MPath(verts, codes), fc="none", ec=color, lw=lw or _lw(0.8),
+                               ls=(0, (2.5, 1.5)) if dashed else "-", zorder=zorder))
+        if arrow_end:
+            arrow(ax, tuple(pts[-2] + (pts[-1] - pts[-2]) * 0.6), tuple(pts[-1]), color=color, lw=lw or _lw(0.8),
+                  head=head, shrink=0, zorder=zorder)
+    else:
+        elbow(ax, pts, color=color, lw=lw, dashed=dashed, head=head, arrow_end=arrow_end, zorder=zorder)
+    if label_text:
+        segs = [(np.linalg.norm(pts[i + 1] - pts[i]), i) for i in range(len(pts) - 1)]
+        _, i = max(segs)
+        p = pts[i] + (pts[i + 1] - pts[i]) * label_at
+        horiz = abs(pts[i + 1][1] - pts[i][1]) < 1e-9
+        off = {"below": (0, -0.8), "above": (0, 0.8), "left": (-0.8, 0), "right": (0.8, 0)}[label_side]
+        ax.text(p[0] + off[0], p[1] + off[1], label_text, fontsize=_fs(1.0), color=label_color or color,
+                ha="center" if horiz else ("right" if label_side == "left" else "left"),
+                va=("top" if label_side == "below" else "bottom") if horiz else "center", zorder=zorder + 1)
+
+
+def chevrons(ax, x, y, w, h, labels, colors=None, tip=2.0, gap=0.6, fontsize=None, text_color="0.1"):
+    """Row of chevron arrows for ordered stages (first one flat on the left). colors: list of fills."""
+    n = len(labels)
+    colors = colors or [PASTEL[k][0] for k in ("blue", "green", "orange", "purple", "rose", "teal")][:n]
+    cw = (w - gap * (n - 1)) / n
+    out = []
+    for i, (lab, c) in enumerate(zip(labels, colors)):
+        x0 = x + i * (cw + gap)
+        notch = 0 if i == 0 else tip
+        pts = [(x0, y), (x0 + cw, y), (x0 + cw + tip, y + h / 2), (x0 + cw, y + h), (x0, y + h),
+               (x0 + notch, y + h / 2)]
+        ax.add_patch(Polygon(pts, closed=True, fc=c, ec="none", zorder=2))
+        ax.text(x0 + (cw + notch) / 2 + tip * 0.25, y + h / 2, lab, ha="center", va="center",
+                fontsize=fontsize or _fs(1.0), color=text_color, zorder=3, linespacing=1.1)
+        out.append(Box(x0, y, cw + tip, h))
+    return out
+
+
+def cycle_diagram(ax, cx, cy, R, labels, colors=None, node_r=None, arc_color="0.35", start=90.0, fontsize=None,
+                  text_r=None, clockwise=True, node_text=None):
+    """Circular process: n nodes on a circle joined by curved arrows (iterative loops, life cycles).
+    node_text: optional short text inside each node (e.g. step numbers); labels sit outside the circle."""
+    n = len(labels)
+    colors = colors or [PASTEL[k][1] for k in ("blue", "green", "orange", "purple", "rose", "teal")][:n]
+    node_r = node_r or R * 0.22
+    sgn = -1 if clockwise else 1
+    angs = np.deg2rad(start + sgn * 360.0 * np.arange(n) / n)
+    P = np.c_[cx + R * np.cos(angs), cy + R * np.sin(angs)]
+    for i in range(n):
+        a0, a1 = angs[i], angs[(i + 1) % n]
+        if clockwise and a1 > a0:
+            a1 -= 2 * np.pi
+        if not clockwise and a1 < a0:
+            a1 += 2 * np.pi
+        da = node_r / R * 1.35
+        t = np.linspace(a0 + sgn * da, a1 - sgn * da, 40)
+        xs, ys = cx + R * np.cos(t), cy + R * np.sin(t)
+        ax.plot(xs[:-1], ys[:-1], color=arc_color, lw=_lw(0.9), zorder=2)
+        arrow(ax, (xs[-3], ys[-3]), (xs[-1], ys[-1]), color=arc_color, lw=_lw(0.9), head=4.5, shrink=0)
+    tr = text_r or R + node_r + 2.2
+    for i, (p, lab, c) in enumerate(zip(P, labels, colors)):
+        ax.add_patch(Circle(p, node_r, fc=lighten(c, 0.55), ec=c, lw=_lw(1.0), zorder=3))
+        if node_text:
+            ax.text(*p, node_text[i], ha="center", va="center", fontsize=_fs(1.1), zorder=4)
+        a = angs[i]
+        ha = "center" if abs(np.cos(a)) < 0.3 else ("left" if np.cos(a) > 0 else "right")
+        va = "center" if abs(np.sin(a)) < 0.3 else ("bottom" if np.sin(a) > 0 else "top")
+        ax.text(cx + tr * np.cos(a), cy + tr * np.sin(a), lab, ha=ha, va=va, fontsize=fontsize or _fs(1.0),
+                linespacing=1.1)
+    return P
+
+
+def icon_graph(ax, x, y, s=4.0, color="#7A5BA8", seed=2, n=5, node_r=None, edge="0.35"):
+    """Tiny node-link icon (graph / molecule / network input) in a square of side s at (x, y)."""
+    rng = np.random.default_rng(seed)
+    ang = np.sort(rng.uniform(0, 2 * np.pi, n))
+    rr = s * (0.28 + 0.14 * rng.random(n))
+    P = np.c_[x + s / 2 + rr * np.cos(ang), y + s / 2 + rr * np.sin(ang)]
+    for i in range(n):
+        j = (i + 1) % n
+        ax.plot([P[i, 0], P[j, 0]], [P[i, 1], P[j, 1]], color=edge, lw=_lw(0.6), zorder=3)
+    ax.plot([P[0, 0], P[2, 0]], [P[0, 1], P[2, 1]], color=edge, lw=_lw(0.6), zorder=3)
+    r = node_r or s * 0.09
+    cols = [color, lighten(color, 0.45), darken(color, 0.15)]
+    for i, p in enumerate(P):
+        ax.add_patch(Circle(p, r, fc=cols[i % 3], ec="white", lw=_lw(0.3), zorder=4))
+    return Box(x, y, s, s)
+
+
+def icon_stack(ax, x, y, w, h, n=3, fc="white", ec="0.45", dx=0.7, dy=0.7, lines=3):
+    """Stack of pages / samples / frames (front page bottom-left at (x, y))."""
+    for k in range(n - 1, -1, -1):
+        ax.add_patch(Rectangle((x + k * dx, y + k * dy), w, h, fc=fc, ec=ec, lw=_lw(0.6), zorder=3 + (n - k)))
+    for j in range(lines):
+        yy = y + h * (0.72 - j * 0.2)
+        ax.plot([x + w * 0.15, x + w * (0.85 if j < lines - 1 else 0.55)], [yy, yy], color="0.6", lw=_lw(0.6),
+                zorder=3 + n + 1)
+    return Box(x, y, w + (n - 1) * dx, h + (n - 1) * dy)
+
+
+def icon_bars(ax, x, y, w, h, values=(0.45, 0.8, 0.6, 1.0), colors=None, baseline=True):
+    """Miniature bar chart icon (results / scores)."""
+    v = np.asarray(values, float) / max(values)
+    n = len(v)
+    colors = colors or ["#9DBCDD"] * (n - 1) + ["#3A6EA5"]
+    bw = w / (n * 1.4)
+    for i, (vi, c) in enumerate(zip(v, colors)):
+        ax.add_patch(Rectangle((x + i * bw * 1.4 + bw * 0.2, y), bw, vi * h, fc=c, ec="none", zorder=3))
+    if baseline:
+        ax.plot([x, x + w], [y, y], color="0.3", lw=_lw(0.6), zorder=4)
+    return Box(x, y, w, h)
+
+
+def icon_person(ax, x, y, h=5.0, color="#7C9CC6"):
+    """Simple person glyph (participants, cohorts): head + rounded body, feet at (x, y)."""
+    r = h * 0.17
+    ax.add_patch(Circle((x, y + h - r), r, fc=color, ec="none", zorder=3))
+    body = FancyBboxPatch((x - h * 0.22, y), h * 0.44, h * 0.56, boxstyle=f"round,pad=0,rounding_size={h * 0.18}",
+                          fc=color, ec="none", zorder=3)
+    ax.add_patch(body)
+    return Box(x - h * 0.22, y, h * 0.44, h)
+
+
+def icon_cells(ax, x, y, w, h, n=14, color="#6FAAA3", seed=4, r=None):
+    """Field of round 'cells' / particles / samples inside a rounded dish outline."""
+    rng = np.random.default_rng(seed)
+    ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle=f"round,pad=0,rounding_size={min(w, h) * 0.2}",
+                                fc="white", ec="0.5", lw=_lw(0.6), zorder=2))
+    r = r or min(w, h) * 0.07
+    pts = []
+    tries = 0
+    while len(pts) < n and tries < 2000:
+        p = (x + r * 1.6 + rng.random() * (w - 3.2 * r), y + r * 1.6 + rng.random() * (h - 3.2 * r))
+        if all((p[0] - q[0]) ** 2 + (p[1] - q[1]) ** 2 > (2.2 * r) ** 2 for q in pts):
+            pts.append(p)
+        tries += 1
+    for p in pts:
+        ax.add_patch(Circle(p, r, fc=lighten(color, 0.35), ec=color, lw=_lw(0.5), zorder=3))
+    return Box(x, y, w, h)
+
+
+def timeline(ax, x0, x1, y, ticks, labels=None, color="0.25", tick_h=0.8, fontsize=None, above=False):
+    """Horizontal time axis with ticks at *ticks* (mm) and labels below (or above)."""
+    ax.plot([x0, x1], [y, y], color=color, lw=_lw(0.9), zorder=2)
+    arrow(ax, (x1 - 1.5, y), (x1 + 0.5, y), color=color, lw=_lw(0.9), head=4, shrink=0)
+    for i, t in enumerate(ticks):
+        ax.plot([t, t], [y - tick_h / 2, y + tick_h / 2], color=color, lw=_lw(0.8), zorder=2)
+        if labels:
+            ax.text(t, y + (tick_h if above else -tick_h), labels[i], ha="center", va="bottom" if above else "top",
+                    fontsize=fontsize or _fs(0.95), color="0.15")

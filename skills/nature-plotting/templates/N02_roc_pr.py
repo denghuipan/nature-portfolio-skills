@@ -1,50 +1,56 @@
-"""N02 -- ROC (a) and precision-recall (b) curves for several classifiers.
-Use when: binary detection / classification performance; PR is the honest view when positives are rare.
-Nature notes: AUC in the legend entries; chance level drawn (diagonal for ROC, prevalence for PR); square
-panels with equal axis limits.
+"""N02 -- ROC and precision-recall curves with operating points and areas in the key.
+Use when: binary classifiers / detectors are compared; ROC for ranking quality, PR because the positive class
+is rare. The chosen threshold of each model is marked on both.
+Look: two square open panels, chance as a thin grey line, method of interest in the strong hue, baselines
+in greys with different dash patterns, AUC / AP written in the key, filled dot = operating point.
 """
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "assets"))
-from nature_style import *      # noqa: F401,F403  rcParams, PALETTE, figsize_*, panel_label, style_axes
+from nature_style import *      # noqa: F401,F403  rcParams, palettes, sizes, set_look, panel_label
 from nature_cmaps import *      # noqa: F401,F403  NS_* colour maps, palettes, colour-bar helpers
 from nature_charts import *     # noqa: F401,F403  chart builders, export()
 use_arial_math()                # maths ($x$, $\mu$) in the same sans face as the labels
 
 # ---------------- MOCK DATA ----------------
-rng = np.random.default_rng(62)
+rng = np.random.default_rng(103)
 n_pos, n_neg = 300, 2700
-models = {"Method A": 0.8, "Method B": 1.4, "Method C (ours)": 2.4}
-scores = {k: (rng.normal(d, 1, n_pos), rng.normal(0, 1, n_neg)) for k, d in models.items()}
+y = np.r_[np.ones(n_pos), np.zeros(n_neg)]
+scores = {"Method A": np.r_[rng.normal(2.2, 1, n_pos), rng.normal(0, 1, n_neg)],
+          "Method B": np.r_[rng.normal(1.5, 1, n_pos), rng.normal(0, 1, n_neg)],
+          "Method C": np.r_[rng.normal(0.9, 1, n_pos), rng.normal(0, 1, n_neg)]}
+thr = 1.5
 # -------------------------------------------
 
-def roc_pr(pos, neg):
-    s = np.r_[pos, neg]; y = np.r_[np.ones(pos.size), np.zeros(neg.size)]
-    o = np.argsort(-s); y = y[o]
-    tp = np.cumsum(y); fp = np.cumsum(1 - y)
-    tpr, fpr = tp / pos.size, fp / neg.size
-    prec = tp / (tp + fp)
-    return np.r_[0, fpr], np.r_[0, tpr], np.r_[0, tpr], np.r_[1, prec]
 
-fig, (a, b) = plt.subplots(1, 2, figsize=figsize_mm(120, 58), gridspec_kw=dict(wspace=0.35))
-cols = ["0.55", PALETTE["blue"], PALETTE["red"]]
-for (name, (pos, neg)), c in zip(scores.items(), cols):
-    fpr, tpr, rec, prec = roc_pr(pos, neg)
-    auc = np.trapezoid(tpr, fpr)                       # area under ROC
-    ap = np.sum(np.diff(rec) * prec[1:])               # average precision
-    a.plot(fpr, tpr, color=c, lw=1.0, label=f"{name}, AUC {auc:.2f}")
-    b.plot(rec, prec, color=c, lw=1.0)
-    k = np.argmin(np.abs(rec - 0.5))
-    direct_label(b, 0.5, prec[k], f"AP {ap:.2f}", color=c, dy=2.5, va="bottom")
-a.plot([0, 1], [0, 1], color="0.7", ls=(0, (3, 2)), lw=0.6)
-prev = n_pos / (n_pos + n_neg)
-b.axhline(prev, color="0.7", ls=(0, (3, 2)), lw=0.6)
-direct_label(b, 0.02, prev, "chance", color="0.5", dy=1.5, va="bottom")
-for ax_ in (a, b):
-    ax_.set_xlim(0, 1); ax_.set_ylim(0, 1.02); ax_.set_aspect("equal")
-a.set_xlabel("False-positive rate"); a.set_ylabel("True-positive rate"); a.legend(loc="lower right", fontsize=5.5)
+def curves(s):
+    o = np.argsort(-s); ys = y[o]; tp = np.cumsum(ys); fp = np.cumsum(1 - ys)
+    tpr = tp / n_pos; fpr = fp / n_neg; prec = tp / (tp + fp)
+    return fpr, tpr, prec, np.trapezoid(tpr, fpr), np.sum(np.diff(np.r_[0, tpr]) * prec)
+
+
+cols = [PALETTE["blue"], "0.35", "0.6"]; dashes = ["-", (0, (4, 1.5)), (0, (1.5, 1.2))]
+fig, (a, b) = plt.subplots(1, 2, figsize=figsize_mm(110, 56))
+fig.subplots_adjust(left=0.1, right=0.98, bottom=0.18, top=0.95, wspace=0.38)
+a.plot([0, 1], [0, 1], color="0.8", lw=0.5)
+b.axhline(n_pos / (n_pos + n_neg), color="0.8", lw=0.5)
+for (nm, s), c, ls in zip(scores.items(), cols, dashes):
+    fpr, tpr, prec, auc, ap = curves(s)
+    a.plot(fpr, tpr, color=c, ls=ls, lw=1.0, label=f"{nm} ({auc:.2f})")
+    b.plot(tpr, prec, color=c, ls=ls, lw=1.0, label=f"{nm} ({ap:.2f})")
+    pos = (s >= thr)
+    tp = np.sum(pos & (y == 1)); fp = np.sum(pos & (y == 0))
+    a.plot(fp / n_neg, tp / n_pos, "o", color=c, ms=3)
+    b.plot(tp / n_pos, tp / max(tp + fp, 1), "o", color=c, ms=3)
+for ax in (a, b):
+    ax.set_xlim(0, 1); ax.set_ylim(0, 1.01); ax.set_aspect("equal")
+    ax.set_xticks([0, 0.5, 1]); ax.set_yticks([0, 0.5, 1])
+a.set_xlabel("False-positive rate"); a.set_ylabel("True-positive rate")
 b.set_xlabel("Recall"); b.set_ylabel("Precision")
-for ax_, l in ((a, "a"), (b, "b")):
-    style_axes(ax_); panel_label(ax_, l, dx=-0.3)
+a.legend(loc="lower right", title="AUC", title_fontsize=6, handlelength=1.8)
+b.legend(loc="lower left", bbox_to_anchor=(0.0, 0.13), title="AP", title_fontsize=6, handlelength=1.8,
+         frameon=True, facecolor="white", edgecolor="none", framealpha=0.9)
+b.text(0.98, n_pos / (n_pos + n_neg) + 0.02, "Chance", fontsize=6, color="0.55", ha="right")
+panel_label(a, "a", dx=-0.3, dy=1.06); panel_label(b, "b", dx=-0.3, dy=1.06)
 export(fig, "N02_roc_pr")

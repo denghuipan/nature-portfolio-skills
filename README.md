@@ -50,7 +50,7 @@ The **nature-portfolio** skill tells the agent to run `scripts/install.ps1`.
 | Skill | Role |
 |-------|------|
 | nature-portfolio | Install & sync (this bootstrap) |
-| nature-plotting | Matplotlib house style + NP sizes (`np_final`), 53 figure templates, colour maps / colour bars, schematic primitives — see [gallery](skills/nature-plotting/README.md) |
+| nature-plotting | Matplotlib house style + NP sizes (`np_final`), switchable axis looks, 62 figure templates modelled on recent Nature-family layouts, colour maps / palettes / colour bars, diagram primitives — see [gallery](skills/nature-plotting/README.md) |
 | nature-figure | Figure contract, layouts, QA |
 | nature-writing | Manuscript sections |
 | nature-polishing | English polish |
