@@ -1,6 +1,6 @@
 # nature-plotting 模板库
 
-Nature 系列期刊风格的 matplotlib 绘图模板，共 62 个。版式参考了大量近年 Nature、Nature Methods、
+Nature 系列期刊风格的 matplotlib 绘图模板，共 67 个（含 6 个整页组合主图）。版式参考了大量近年 Nature、Nature Methods、
 Nature Communications、Nature Climate Change 等论文中反复出现的图形做法（开放坐标轴、外向短刻度、柔和配色、
 显著性括号与 n、千分位数字、虚线图例框、情景扇形带、蝴蝶图、表格图、流程框图等），全部重新绘制，
 不复制任何已发表的图。图中数据都是虚拟的（Data 1、Group A、Method B……），换成自己的数据即可。
@@ -186,3 +186,27 @@ python scripts/audit_layout.py fig.pdf        # 检查 PDF：尺寸、字体、�
 **F01_composite_figure** — 完整双栏组合页（183 × 150 mm）：流程图 + 五个数据面板
 
 ![F01_composite_figure](gallery/F01_composite_figure.png)
+
+**F02_method_benchmark** — 方法类论文主图（183 × 146 mm，7 个子图）：方法流程、基准柱状图 + 显著性、随样本量的缩放、预测一致性密度图、表示空间、误差累积分布、模型排名
+
+![F02_method_benchmark](gallery/F02_method_benchmark.png)
+
+**F03_clinical_study** — 临床 / 生物医学结果主图（183 × 170 mm，7 个子图）：研究设计、分组分布、剂量-反应、时间进程、火山图、生存曲线 + 风险人数表、亚组森林图
+
+![F03_clinical_study](gallery/F03_clinical_study.png)
+
+**F04_measurement_physics** — 实验测量类主图（183 × 160 mm，7 个子图）：装置示意、测量 vs 模型（含外推）、场分布 + 显著性、重复性直方图、原始图像、时频图、误差预算
+
+![F04_measurement_physics](gallery/F04_measurement_physics.png)
+
+**F05_earth_climate** — 地球 / 气候综合主图（183 × 165 mm，8 个子图）：变化地图、情景预测、驱动因素气泡图、组成变化、分年代分布、区域小图、风向玫瑰图、类型转移冲积图
+
+![F05_earth_climate](gallery/F05_earth_climate.png)
+
+**F06_machine_learning** — 机器学习论文主图（183 × 170 mm，10 个子图）：模型结构、训练曲线、缩放律、ROC、PR、混淆矩阵、嵌入、校准、结果表、消融
+
+![F06_machine_learning](gallery/F06_machine_learning.png)
+
+F02–F06 用 `assets/nature_layout.py` 的 `Page` 按毫米排版：同一行的框线顶边、底边一致，各行共用列网格、
+外边缘对齐，面板字母统一在框线左侧 10 mm、上方 3 mm；色条放在框内（`cbar_box`）不挤压框线；
+保存时 `pg.check()` 会列出差一点没对齐的边。

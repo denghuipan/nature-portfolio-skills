@@ -100,3 +100,8 @@ K01 colour maps and L*, K02 colour-bar layouts, K03 palettes under CVD, K04 the 
 | Qualitative concept sketches | S05 | `concept_axes`, translucent sets |
 | Visual abstract workflow | S06 | icons, `brace` |
 | Full page | F01 | one gridspec + mm canvas |
+| Methods-paper main figure (7 panels) | F02 | `nature_layout.Page`, `columns`, `cbar_box` |
+| Clinical / biomedical results figure (7 panels) | F03 | `Page`, `km_curve`, `at_risk_table`, forest with text columns |
+| Measurement-paper main figure (7 panels) | F04 | `Page`, `legend_box`, `arrow_note`, `pg.grid` |
+| Earth / climate synthesis figure (8 panels) | F05 | `Page`, `fan`, `area_stack`, polar cell, `alluvial` |
+| ML-paper main figure (10 panels) | F06 | `Page` with 4- and 3-column grids, `zebra_table`, `gbarh` |

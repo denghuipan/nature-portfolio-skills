@@ -54,6 +54,7 @@ __all__ = [
     "dot_matrix", "size_legend", "alluvial", "beeswarm_x", "beeswarm", "paired_lines", "donut", "waffle",
     "zebra_table", "zoom_to", "highlight_points", "node_link", "hill", "fit_hill", "mean_sem", "overlay_bars",
     "square_legend", "area_stack", "gradient_fill", "gradient_patch", "gradient_patches", "gbarh", "gradient_band",
+    "cbar_box",
 ]
 
 
@@ -554,6 +555,39 @@ def gradient_patches(ax, patches, color, light=0.7, direction="up", zorder=None)
         ext = mtransforms.Bbox.from_extents(ext.x0, max(ext.y0, ylo if ylo > 0 else lo_), ext.x1, ext.y1)
     return gradient_image(ax, (ext.x0, ext.x1, ext.y0, ext.y1), [_mix(color, light), mcolors.to_rgba(color)],
                           direction=direction, clip=clip, zorder=z)
+
+
+def cbar_box(ax, mappable, label=None, loc="lower left", width_mm=22.0, bar_mm=1.6, ticks=None, extend=None,
+             pad_mm=1.0, margin_mm=1.2, fc="white", alpha=0.88, fmt=None):
+    """Horizontal colour bar on a small white card inside the panel (maps, spectrograms, dense scatters):
+    the key never changes the frame size and stays readable over busy data. Sizes in mm.
+    loc: 'lower left' | 'lower right' | 'upper left' | 'upper right'. Returns the Colorbar."""
+    fig = ax.figure
+    bb = ax.get_position()
+    W, H = (v * MM_PER_IN for v in fig.get_size_inches())
+    aw, ah = bb.width * W, bb.height * H
+    fmm = mpl.rcParams["font.size"] / 72 * MM_PER_IN
+    lab_h = fmm * 1.15 if label else 0.0
+    tick_h = fmm * 1.15
+    over = 2.2                                           # tick labels overhang the bar ends
+    bw = width_mm + 2 * (pad_mm + over)
+    bh = pad_mm + lab_h + 0.6 + bar_mm + 0.5 + tick_h + pad_mm
+    x0 = margin_mm if "left" in loc else aw - margin_mm - bw
+    y0 = margin_mm if "lower" in loc else ah - margin_mm - bh
+    ax.add_patch(Rectangle((x0 / aw, y0 / ah), bw / aw, bh / ah, transform=ax.transAxes, facecolor=fc, alpha=alpha,
+                           edgecolor="none", zorder=4.9))
+    cax = ax.inset_axes([(x0 + pad_mm + over) / aw, (y0 + pad_mm + tick_h + 0.5) / ah, width_mm / aw, bar_mm / ah],
+                        zorder=5)
+    kw = dict(cax=cax, orientation="horizontal", ticks=ticks, format=fmt)
+    if extend:
+        kw["extend"] = extend
+    cb = fig.colorbar(mappable, **kw)
+    from nature_cmaps import style_cbar
+    style_cbar(cb)
+    cax.tick_params(pad=1.0)
+    if label:
+        cax.set_title(label, pad=1.2)
+    return cb
 
 
 def gbarh(ax, y, widths, colors, height=0.6, left=0.0, light=0.62, **kw):

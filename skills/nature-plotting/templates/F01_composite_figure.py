@@ -39,7 +39,7 @@ route(top, [(172, 9), (172, 3.5), (25, 3.5), (25, 10)], dashed=True, color="0.35
       label_side="below")
 top.text(1, 30.5, "a", fontsize=8, fontweight="bold", va="top")
 
-gs = fig.add_gridspec(2, 3, left=0.07, right=0.98, top=0.74, bottom=0.07, hspace=0.42, wspace=0.42,
+gs = fig.add_gridspec(2, 3, left=0.085, right=0.98, top=0.74, bottom=0.07, hspace=0.42, wspace=0.42,
                       height_ratios=[1, 0.9])
 b = fig.add_subplot(gs[0, 0]); c = fig.add_subplot(gs[0, 1]); d = fig.add_subplot(gs[0, 2])
 e = fig.add_subplot(gs[1, :2]); f = fig.add_subplot(gs[1, 2])
@@ -75,6 +75,6 @@ for yi, s_, h_ in zip(y, score, half):
     f.plot([s_ - h_, s_ + h_], [yi, yi], color=col, lw=0.8); f.plot(s_, yi, "o", color=col, ms=2.6)
 f.set_yticks(y, entries); f.tick_params(axis="y", length=0)
 f.set_xlabel("Score (95% CI)")
-for ax_, l, dx in ((b, "b", -0.36), (c, "c", -0.36), (d, "d", -0.1), (e, "e", -0.14), (f, "f", -0.5)):
+for ax_, l, dx in ((b, "b", -0.36), (c, "c", -0.36), (d, "d", -0.1), (e, "e", -0.14), (f, "f", -0.44)):
     panel_label(ax_, l, dx=dx, dy=1.12)
-export(fig, "F01_composite_figure")
+export(fig, "F01_composite_figure", exact=True)

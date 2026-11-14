@@ -33,7 +33,7 @@ def main(argv):
         t0 = time.time()
         r = subprocess.run([sys.executable, str(f)], env=env, capture_output=True, text=True, cwd=ROOT)
         notes = [l for l in (r.stdout + r.stderr).splitlines()
-                 if l.startswith("[export]") or "Error" in l or "Traceback" in l]
+                 if l.startswith(("[export]", "[layout]")) or "Error" in l or "Traceback" in l]
         status = "ok " if r.returncode == 0 else "ERR"
         print(f"{status} {f.stem:28s} {time.time() - t0:5.1f}s  " + " | ".join(notes)[:300])
         if r.returncode:

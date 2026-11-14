@@ -3,15 +3,16 @@ name: nature-plotting
 description: >-
   Publication figures in Nature-journal style with matplotlib: house rcParams (np_final preset, 89/183 mm,
   Arial at one font size (7 pt) for all text, every panel in a full frame with short inward ticks, soft
-  gradient panel backgrounds and gradient fills, switchable looks, 600 dpi PNG + editable PDF), 62 ready
+  gradient panel backgrounds and gradient fills, switchable looks, 600 dpi PNG + editable PDF), 67 ready
   templates built from the layouts of recent Nature-family papers (trends and fans,
   benchmark bars with significance, mirrored counts, forest tables, distributions, dense scatter with zoom,
   volcano, embeddings, dot matrices, maps with stippling, survival, dose-response, training and scaling
   curves, alluvial flows, networks, colour maps and colour bars, pipeline / architecture / study-design
-  diagrams, composite page), house colour maps and palettes, and pre-submission QA. Use for any plot, chart,
+  diagrams, composite pages) plus five full main-figure layouts with 7-10 aligned panels on a millimetre
+  page grid, house colour maps and palettes, and pre-submission QA. Use for any plot, chart,
   figure, colour bar, schematic or figure layout for a paper. Triggers: 画图, 作图, 出图, 配图, 科研绘图, 色条,
   colorbar, 示意图, 概念图, 流程图, plot, chart, figure, Nature style, publication quality.
-version: 4.1.0
+version: 4.2.0
 author: Denghui Pan (dpan13@ucsc.edu)
 ---
 
@@ -45,6 +46,7 @@ from nature_style import *        # rcParams, sizes, PALETTE, THEMES, set_look, 
 from nature_cmaps import *        # NS_* colour maps, palettes, cbar_* helpers
 from nature_charts import *       # chart builders + export()
 from nature_schematic import *    # only for diagrams
+from nature_layout import Page, columns, split   # only for multi-panel main figures (section 7)
 use_arial_math()                  # $x$, $\mu$ in the label face
 ```
 
@@ -143,6 +145,11 @@ stand-alone (`python templates/C01_bars_significance.py`). Full chooser with alt
 | Qualitative sketches (scaling, landscape, sets) | `S05_concept_sketches` |
 | One-line visual abstract of the workflow | `S06_icon_workflow` |
 | Full double-column composite page | `F01_composite_figure` |
+| Methods paper main figure: overview + benchmark + scaling + accuracy (7 panels) | `F02_method_benchmark` |
+| Clinical / biomedical results figure: design, outcomes, survival, subgroups (7 panels) | `F03_clinical_study` |
+| Measurement paper: concept, scaling vs model, map, reproducibility, raw data, budget (7 panels) | `F04_measurement_physics` |
+| Earth / climate synthesis: map, projections, drivers, composition, decades, regions (8 panels) | `F05_earth_climate` |
+| ML paper: architecture, training, scaling, ROC/PR, confusion, embedding, calibration, table, ablation (10 panels) | `F06_machine_learning` |
 
 ## 3. Sizes and presets
 
@@ -186,6 +193,7 @@ Details: `references/colour-and-colorbars.md`.
 - Diverging: `NS_DIV_BR`, `NS_DIV_PG`, `NS_DIV_BO`, `NS_DIV_DARK`; pin the centre with
   `center_norm(vmin, 0, vmax)`. Cyclic: `NS_PHASE`. True visible colour: `NS_VISIBLE`.
 - Colour bars (hair-line outline, outward ticks): `cbar_side`, `cbar_below` (under a scatter), `cbar_inset`,
+  `cbar_box` (on a white card inside a map / spectrogram / dense scatter),
   `cbar_top`, `cbar_span`, `cbar_discrete`, `cbar_endlabels`, `line_mappable`, `spectrum_strip`, `log_ticks`;
   `size_legend` for bubble areas.
 - Never rainbow / jet for ordered data; check palettes with `simulate_cvd`.
@@ -205,7 +213,30 @@ line weights with the data panels and stay vector. Guide: `references/schematics
 - Also available: line-art optics (`beam`, `lens`, `objective`, `mirror`, `beamsplitter`, `camera`, `fiber`),
   `layer_stack`, `iso_block`, `dimension`, `concept_axes` (sketch axes without numbers).
 
-## 7. Export and QA
+## 7. Multi-panel pages (nature_layout)
+
+Main figures are laid out in millimetres with `nature_layout.Page`, so every frame edge sits on a shared
+grid and the PDF is exactly the page size:
+
+```python
+from nature_layout import Page, columns, split
+pg = Page(183, 165)                                   # double column, height <= 170 mm
+cols = columns(12, 178.5, 3, gap=13.5)                # three equal frames; 12 mm left for y labels
+a = pg.canvas(0, 1, 183, 30)                          # schematic band in mm units
+b, c, d = pg.row(44, 38, cols)                        # same top and height -> aligned frames
+e = pg.ax(cols[0][0], 96, cols[1][0] + cols[1][1] - cols[0][0], 38)   # spans two columns, edges still on grid
+pg.letters([b, c, d, e], "bcde"); pg.letter(a, "a")  # letters 10 mm left, 3 mm above every frame
+pg.save("Fig2")                                       # alignment audit, then exact-size PNG + PDF
+```
+
+Rules the composites F02-F06 follow: one grid per row (3 or 4 columns) with the same outer edges on every
+row; 13.5 mm between frames (room for the next frame's y labels); about 4 mm above a frame for its letter
+and subtitle and 9-10 mm below it for the x labels; colour keys inside the frame (`cbar_box`, `cbar_inset`)
+or in a fixed mm box (`pg.cax`), never shrinking a frame; small multiples with `pg.grid` inside one cell;
+tick labels at the right page edge kept on the page (right grid edge 178.5 mm). `pg.check()` lists frame
+edges that are within 1.5 mm of each other but not equal; `pg.guides()` draws the grid while laying out.
+
+## 8. Export and QA
 
 ```python
 export(fig, "fig2_b")                      # PNG 600 dpi + PDF (save_fig), prints any text < 5 pt
@@ -222,7 +253,7 @@ Then:
 
 Gallery rebuild: `python scripts/render_gallery.py [prefix ...]`.
 
-## 8. Do not
+## 9. Do not
 
 - Use matplotlib defaults, `tab10`, `jet`, seaborn themes or `plt.style.use`.
 - Mix looks or font sizes within one paper, or put the legend over data or text below 5 pt.
